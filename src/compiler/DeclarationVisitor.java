@@ -57,7 +57,7 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
     @Override
     public Type visit(Ass p, DeclarationContext arg) {
         if (!arg.isDeclared(p.ident_, p.expr_.accept(this, arg))) {
-            throw new RuntimeException("Wrong type or undeclared variable (Ass)");
+            throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num,p.col_num,"Wrong type or undeclared variable (Ass)"));
         }
         return null;
     }
@@ -65,7 +65,7 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
     @Override
     public Type visit(Incr p, DeclarationContext arg) {
         if (!arg.isDeclared(p.ident_, new Int())) {
-            throw new RuntimeException("Wrong type or undeclared variable (Incr)");
+            throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num,p.col_num,"Wrong type or undeclared variable (Incr)"));
         }
         return null;
     }
@@ -73,7 +73,7 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
     @Override
     public Type visit(Decr p, DeclarationContext arg) {
         if (!arg.isDeclared(p.ident_, new Int())) {
-            throw new RuntimeException("Wrong type or undeclared variable (Decr)");
+            throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num,p.col_num,"Wrong type or undeclared variable (Decr)"));
         }
         return null;
     }
@@ -81,22 +81,25 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
     @Override
     public Type visit(Ret p, DeclarationContext arg) {
         Type type = p.expr_.accept(this, arg);
-//        if (!arg.checkResultType(type)) {
-//            System.out.println("Wrong result type");
-//            throw new RuntimeException("Wrong type or undeclared variable");
-//        }
+        if (!arg.checkResultType(type)) {
+            throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num,p.col_num,"Wrong result type"));
+        }
         return type;
     }
 
     @Override
     public Type visit(VRet p, DeclarationContext arg) {
-        return super.visit(p, arg);
+        Type type = new Void();
+        if (!arg.checkResultType(type)) {
+            throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num,p.col_num,"Wrong result type"));
+        }
+        return type;
     }
 
     @Override
     public Type visit(Cond p, DeclarationContext arg) {
         if (!p.expr_.accept(this, arg).equals(new Bool())) {
-            throw new RuntimeException("Wrong type or undeclared variable (Cond)");
+            throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num,p.col_num,"Wrong type or undeclared variable (Cond)"));
         }
         return p.stmt_.accept(this, arg.newScope());
     }
@@ -104,7 +107,7 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
     @Override
     public Type visit(CondElse p, DeclarationContext arg) {
         if (p.expr_.accept(this, arg).equals(new Bool())) {
-            throw new RuntimeException("Wrong type or undeclared variable (CondElse)");
+            throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num,p.col_num,"Wrong type or undeclared variable (CondElse)"));
         }
         p.stmt_1.accept(this, arg.newScope());
         p.stmt_2.accept(this, arg.newScope());
@@ -114,18 +117,15 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
     @Override
     public Type visit(While p, DeclarationContext arg) {
         if (!p.expr_.accept(this, arg).equals(new Bool())) {
-            throw new RuntimeException("Wrong type or undeclared variable (While)");
+            throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num,p.col_num,"Wrong type or undeclared variable (While)"));
         }
         return p.stmt_.accept(this, arg.newScope());
     }
 
-    @Override
-    public Type visit(Empty p, DeclarationContext arg) {
-        return super.visit(p, arg);
-    }
 
     @Override
     public Type visit(BStmt p, DeclarationContext arg) {
+        arg=arg.newScope();
         return super.visit(p, arg);
     }
 
@@ -174,7 +174,7 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
     public Type visit(Init p, DeclarationContext arg) {
         Type rType = p.expr_.accept(this, arg);
         if (!arg.isDeclared(p.ident_, rType)) {
-            throw new RuntimeException("Wrong type or undeclared variable (Init)");
+            throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num,p.col_num,"Wrong type or undeclared variable (Init)"));
         }
         return null;
     }
@@ -199,13 +199,13 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
     public Type visit(EApp p, DeclarationContext arg) {
         Type type = arg.getTypeOfVar(p.ident_);
         if (!(type instanceof Fun))
-            throw new RuntimeException(p.ident_ + " is not a function");
+            throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num,p.col_num,p.ident_ + " is not a function"));
         Fun functionType = (Fun) type;
         List<Type> argumentsTypes = p.listexpr_.stream().map(exp -> exp.accept(this, arg)).collect(Collectors.toCollection(LinkedList::new));
         List<Type> expectedTypes = functionType.listtype_;
 
         if (!argumentsTypes.equals(expectedTypes)) {
-            throw new RuntimeException("Arguments mismatch in function call");
+            throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num,p.col_num,"Arguments mismatch in function call"));
         }
 
         return functionType.type_;
@@ -221,7 +221,7 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
         if (super.visit(p, arg) instanceof Int)
             return new Int();
         else {
-            throw new RuntimeException("Wrong type");
+            throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num,p.col_num,"Wrong type"));
         }
     }
 
@@ -230,7 +230,7 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
         if (super.visit(p, arg) instanceof Bool)
             return new Bool();
         else {
-            throw new RuntimeException("Wrong type");
+            throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num,p.col_num,"Wrong type"));
         }
     }
 
@@ -244,12 +244,12 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
 
     @Override
     public Type visit(EMul p, DeclarationContext arg) {
-        return visitTrinaryOperation(p, new Int(), "Wrong type in mul", arg, p.expr_1, p.expr_2);
+        return visitTrinaryOperation(p, new Int(), SemanticErrorMessage.buildMessage(p.line_num,p.col_num,"Wrong type in mul"), arg, p.expr_1, p.expr_2);
     }
 
     @Override
     public Type visit(EAdd p, DeclarationContext arg) {
-        return visitTrinaryOperation(p, new Int(), "Wrong type in add", arg, p.expr_1, p.expr_2);
+        return visitTrinaryOperation(p, new Int(), SemanticErrorMessage.buildMessage(p.line_num,p.col_num,"Wrong type in add"), arg, p.expr_1, p.expr_2);
     }
 
     @Override
@@ -258,23 +258,23 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
             Type t1 = p.accept(this, arg);
             Type t2 = p.accept(this, arg);
             if (!t1.equals(t2)) {
-                throw new RuntimeException("Wrong type in comparison");
+                throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num,p.col_num,"Wrong type in comparison"));
             }
             return new Bool();
         }
-        return visitTrinaryOperation(p, new Int(), "Wrong type in comparison", arg, p.expr_1, p.expr_2);
+        return visitTrinaryOperation(p, new Int(), SemanticErrorMessage.buildMessage(p.line_num,p.col_num,"Wrong type in comparison"), arg, p.expr_1, p.expr_2);
 
     }
 
     @Override
     public Type visit(EAnd p, DeclarationContext arg) {
 
-        return visitTrinaryOperation(p, new Bool(), "Wrong type in and", arg, p.expr_1, p.expr_2);
+        return visitTrinaryOperation(p, new Bool(), SemanticErrorMessage.buildMessage(p.line_num,p.col_num,"Wrong type in and"), arg, p.expr_1, p.expr_2);
     }
 
     @Override
     public Type visit(EOr p, DeclarationContext arg) {
-        return visitTrinaryOperation(p, new Bool(), "Wrong type in or", arg, p.expr_1, p.expr_2);
+        return visitTrinaryOperation(p, new Bool(), SemanticErrorMessage.buildMessage(p.line_num,p.col_num,"Wrong type in or"), arg, p.expr_1, p.expr_2);
     }
 
 

@@ -65,10 +65,10 @@ public class DeclarationContext {
 
     public boolean checkResultType(Type type) {
         for (DeclarationContext currentContext = this; currentContext != null; currentContext = currentContext.parent) {
-            if(currentContext.expectedResultType!=)
-            return type == expectedResultType;
+            if (currentContext.expectedResultType != null)
+                return type.equals(currentContext.expectedResultType);
         }
-        
+        return false;
     }
 
 
