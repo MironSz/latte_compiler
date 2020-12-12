@@ -7,8 +7,9 @@ PARSER_FLAGS=-locations -expect 100
 LEXER=${JAVA} ${JAVA_FLAGS} JLex.Main
 LEXER_FLAGS=
 all : main
+	./buildJar.sh
 
-main : absyn latte/Yylex.class latte/PrettyPrinter.class compiler/DeclarationContext.class compiler/DeclarationVisitor.class compiler/SimplifyLiteralSyntaxVisitor.class compiler/ReturnVisitor.class  latte/Main.class latte/VisitSkel.class latte/ComposVisitor.class latte/AbstractVisitor.class latte/FoldVisitor.class latte/AllVisitor.class latte/parser.class latte/sym.class latte/Test.class
+main : absyn latte/Yylex.class latte/PrettyPrinter.class compiler/SemanticErrorMessage.class compiler/DeclarationContext.class compiler/DeclarationVisitor.class compiler/SimplifyLiteralSyntaxVisitor.class compiler/ReturnVisitor.class  latte/Main.class latte/VisitSkel.class latte/ComposVisitor.class latte/AbstractVisitor.class latte/FoldVisitor.class latte/AllVisitor.class latte/parser.class latte/sym.class latte/Test.class
 
 
 .PHONY : absyn
@@ -35,7 +36,7 @@ latte/parser.class : latte/parser.java latte/sym.java
 latte/PrettyPrinter.class : latte/PrettyPrinter.java
 
 clean :
-	rm -f latte/Absyn/*.class latte/*.class
+	rm -f latte/Absyn/*.class latte/*.class compiler/*.class latte/*.bak latte/Absyn/*.bak
 
 distclean : vclean
 

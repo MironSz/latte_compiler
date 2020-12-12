@@ -45,10 +45,21 @@ public class SimplifyLiteralSyntaxVisitor extends FoldVisitor<Expr, Object> {
         if (e1 instanceof ELitInt && e2 instanceof ELitInt) {
             if (p.mulop_ instanceof Times)
                 retExpr = new ELitInt(((ELitInt) e1).integer_ * ((ELitInt) e2).integer_);
-            else if (p.mulop_ instanceof Div)
+            else if (p.mulop_ instanceof Div) {
+                if (((ELitInt) e2).integer_.equals(0)) {
+                    throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num, p.col_num,
+                            "Division by zero"));
+
+                }
                 retExpr = new ELitInt(((ELitInt) e1).integer_ / ((ELitInt) e2).integer_);
-            else
+            } else {
+                if (((ELitInt) e2).integer_.equals(0)) {
+                    throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num, p.col_num,
+                            "Modulo by zero"));
+
+                }
                 retExpr = new ELitInt(((ELitInt) e1).integer_ % ((ELitInt) e2).integer_);
+            }
 
         } else {
             retExpr = new EMul(e1, p.mulop_, e2);

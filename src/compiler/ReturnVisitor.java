@@ -28,7 +28,8 @@ public class ReturnVisitor extends FoldVisitor<Boolean, Boolean> {
     @Override
     public Boolean visit(FnDef p, Boolean arg) {
         if (!(p.type_ instanceof Void) && !super.visit(p, arg))
-            throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num, p.col_num, "Function " + p.ident_ + " doesn't end with \"return\n statement"));
+            throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num, p.col_num,
+                    "Function " + p.ident_ + " doesn't end with \"return\" statement"));
         return true;
 
     }

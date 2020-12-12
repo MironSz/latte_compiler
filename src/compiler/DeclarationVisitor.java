@@ -28,19 +28,29 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
 
     @Override
     public Type visit(FnDef p, DeclarationContext arg) {
-//        arg.declareNewVar(p.ident_,p.type_);
         arg = arg.newScope(p.type_);
-        for (Arg argument : p.listarg_) {
-             argument.accept(this,arg);
-//            arg = arg.declareNewVar(((ArgCode) argument).ident_, ((ArgCode) argument).type_, p.line_num, p.col_num);
+        if (p.ident_.equals("main")) {
+            if (!p.listarg_.isEmpty()) {
+                throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num, p.col_num, "Function main cannot take arguments"));
+            }
+            if(!(p.type_ instanceof Int)){
+                throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num, p.col_num, "Function main must be of type \"Int\""));
+
+            }
         }
-        p.block_.accept(this,arg);
-//        return super.visit(p, arg);
-    return null;
+
+        for (Arg argument : p.listarg_) {
+            argument.accept(this, arg);
+        }
+        p.block_.accept(this, arg);
+        return null;
     }
 
     @Override
     public Type visit(ArgCode p, DeclarationContext arg) {
+        if (p.type_ instanceof Void) {
+            throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num, p.col_num, "Function argument of type \"Void\" is forbidden"));
+        }
         arg = arg.declareNewVar(p.ident_, p.type_, p.line_num, p.col_num);
         return super.visit(p, arg);
     }
@@ -54,6 +64,10 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
 
     @Override
     public Type visit(Decl p, DeclarationContext arg) {
+        if (p.type_ instanceof Void){
+            throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num, p.col_num, "Cannot declare variable of type void"));
+
+        }
         for (Item item : p.listitem_) {
             arg = arg.declareNewVar(item.ident_, p.type_, p.line_num, p.col_num);
         }
@@ -62,8 +76,14 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
 
     @Override
     public Type visit(Ass p, DeclarationContext arg) {
-        if (!arg.isDeclared(p.ident_, p.expr_.accept(this, arg), p.line_num, p.col_num)) {
-            throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num, p.col_num, "Wrong type or undeclared variable"));
+        Type rType = p.expr_.accept(this, arg);
+        if (!arg.isDeclared(p.ident_, rType , p.line_num, p.col_num)) {
+            Type lType = arg.getTypeOfVar(p.ident_,p.line_num,p.col_num);
+            if(!rType.equals(lType)){
+                throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num, p.col_num,
+                        "Cannot assign "+rType.getClass().toString()+" to "+lType.getClass().toString()));
+
+            }
         }
         return null;
     }
@@ -87,9 +107,13 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
     @Override
     public Type visit(Ret p, DeclarationContext arg) {
         Type type = p.expr_.accept(this, arg);
+        if (type instanceof Void) {
+            throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num, p.col_num, "Cannot return result of type void"));
+        }
         if (!arg.checkResultType(type)) {
             throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num, p.col_num, "Wrong result type"));
         }
+
         return type;
     }
 
@@ -167,7 +191,7 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
 
     @Override
     public Type visit(EVar p, DeclarationContext arg) {
-        return arg.getTypeOfVar(p.ident_,p.line_num,p.col_num);
+        return arg.getTypeOfVar(p.ident_, p.line_num, p.col_num);
     }
 
     //TODO I think no action is needed.
@@ -255,12 +279,12 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
 
     @Override
     public Type visit(EAdd p, DeclarationContext arg) {
-        if(p.addop_ instanceof Minus)
+        if (p.addop_ instanceof Minus)
             return visitTrinaryOperation(p, new Int(), SemanticErrorMessage.buildMessage(p.line_num, p.col_num, "Wrong type in add"), arg, p.expr_1, p.expr_2);
-        else{
-            try{
+        else {
+            try {
                 return visitTrinaryOperation(p, new Int(), SemanticErrorMessage.buildMessage(p.line_num, p.col_num, "Wrong type in add"), arg, p.expr_1, p.expr_2);
-            } catch (Exception exception){
+            } catch (Exception exception) {
                 return visitTrinaryOperation(p, new Str(), SemanticErrorMessage.buildMessage(p.line_num, p.col_num, "Wrong type in add"), arg, p.expr_1, p.expr_2);
 
             }

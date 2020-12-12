@@ -30,16 +30,19 @@ public class Main {
 
     public static void main(String args[]) throws Exception {
         Main t = new Main(args);
-        latte.Absyn.Program program;
+        latte.Absyn.Program program = null;
         try {
-            program = t.parse();
+            try {
+                program = t.parse();
+            } catch (Throwable e) {
+                System.err.println("At line " + String.valueOf(t.l.line_num()) + ", near \"" + t.l.buff() + "\" :");
+            }
             program.accept(new SimplifyLiteralSyntaxVisitor(), null);
             program.accept(new ReturnVisitor(), false);
             program.accept(new DeclarationVisitor(), new DeclarationContext());
         } catch (Throwable e) {
-//            System.err.println("At line " + String.valueOf(t.l.line_num()) + ", near \"" + t.l.buff() + "\" :");
-            System.err.println("     " + e.getMessage());
-            e.printStackTrace();
+            System.err.println(e.getMessage());
+//            e.printStackTrace();
             System.exit(1);
         }
 
@@ -47,18 +50,7 @@ public class Main {
     }
 
     public latte.Absyn.Program parse() throws Exception {
-        /* The default parser is the first-defined entry point. */
         latte.Absyn.Program ast = p.pProgram();
-//        System.out.println();
-//        System.out.println("Parse Succesful!");
-//        System.out.println();
-//        System.out.println("[Abstract Syntax]");
-//        System.out.println();
-//        System.out.println(PrettyPrinter.show(ast));
-//        System.out.println();
-//        System.out.println("[Linearized Tree]");
-//        System.out.println();
-//        System.out.println(PrettyPrinter.print(ast));
         return ast;
     }
 }
