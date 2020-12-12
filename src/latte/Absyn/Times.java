@@ -4,11 +4,11 @@ public class Times  extends MulOp {
   public int line_num, col_num, offset;
   public Times() { }
 
-  public <R,A> R accept(Visitor<R,A> v, A arg) { return v.visit(this, arg); }
+  public <R,A> R accept(latte.Absyn.MulOp.Visitor<R,A> v, A arg) { return v.visit(this, arg); }
 
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) return true;
-    if (o instanceof Times) {
+    if (o instanceof latte.Absyn.Times) {
       return true;
     }
     return false;

@@ -8,12 +8,12 @@ public class FnDef  extends TopDef {
   public int line_num, col_num, offset;
   public FnDef(Type p1, String p2, ListArg p3, Block p4) { type_ = p1; ident_ = p2; listarg_ = p3; block_ = p4; }
 
-  public <R,A> R accept(Visitor<R,A> v, A arg) { return v.visit(this, arg); }
+  public <R,A> R accept(latte.Absyn.TopDef.Visitor<R,A> v, A arg) { return v.visit(this, arg); }
 
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) return true;
-    if (o instanceof FnDef) {
-      FnDef x = (FnDef)o;
+    if (o instanceof latte.Absyn.FnDef) {
+      latte.Absyn.FnDef x = (latte.Absyn.FnDef)o;
       return this.type_.equals(x.type_) && this.ident_.equals(x.ident_) && this.listarg_.equals(x.listarg_) && this.block_.equals(x.block_);
     }
     return false;

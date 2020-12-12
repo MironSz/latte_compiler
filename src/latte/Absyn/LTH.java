@@ -4,11 +4,11 @@ public class LTH  extends RelOp {
   public int line_num, col_num, offset;
   public LTH() { }
 
-  public <R,A> R accept(Visitor<R,A> v, A arg) { return v.visit(this, arg); }
+  public <R,A> R accept(latte.Absyn.RelOp.Visitor<R,A> v, A arg) { return v.visit(this, arg); }
 
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) return true;
-    if (o instanceof LTH) {
+    if (o instanceof latte.Absyn.LTH) {
       return true;
     }
     return false;

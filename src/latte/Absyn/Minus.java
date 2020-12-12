@@ -4,11 +4,11 @@ public class Minus  extends AddOp {
   public int line_num, col_num, offset;
   public Minus() { }
 
-  public <R,A> R accept(Visitor<R,A> v, A arg) { return v.visit(this, arg); }
+  public <R,A> R accept(latte.Absyn.AddOp.Visitor<R,A> v, A arg) { return v.visit(this, arg); }
 
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) return true;
-    if (o instanceof Minus) {
+    if (o instanceof latte.Absyn.Minus) {
       return true;
     }
     return false;

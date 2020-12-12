@@ -44,13 +44,13 @@ public class DeclarationContext {
     }
 
 
-    public Type getTypeOfVar(String name) {
+    public Type getTypeOfVar(String name, int line,int col) {
         for (DeclarationContext currentContext = this; currentContext != null; currentContext = currentContext.parent) {
             if (currentContext.nameToType.containsKey(name)) {
                 return currentContext.nameToType.get(name);
             }
         }
-        throw new RuntimeException("Variable " + name + "  undeclared");
+        throw new RuntimeException(SemanticErrorMessage.buildMessage(line,col,"Variable "+name+" undeclared"));
     }
 
     public DeclarationContext newScope() {
@@ -72,18 +72,18 @@ public class DeclarationContext {
     }
 
 
-    public DeclarationContext declareNewVar(String name, Type type) {
+    public DeclarationContext declareNewVar(String name, Type type, int line, int col) {
 //        DeclarationContext result = this.newScope();
         DeclarationContext result = this;
         if (result.nameToType.containsKey(name)) {
-            throw new RuntimeException("Variable " + name + " previously declared");
+            throw new RuntimeException(SemanticErrorMessage.buildMessage(line,col,"Variable "+name+" previously declared"));
         }
         result.nameToType.put(name, type);
         return result;
     }
 
-    public boolean isDeclared(String name, Type type) {
-        Type type2 = this.getTypeOfVar(name);
+    public boolean isDeclared(String name, Type type, int line, int col) {
+        Type type2 = this.getTypeOfVar(name,line,col);
         return type.equals(type2);
     }
 }

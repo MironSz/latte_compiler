@@ -1,65 +1,61 @@
-package latte;
+    package latte;
 
-import java_cup.parser;
-import latte.Absyn.Program;
-
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
+    import latte.*;
+    import java.io.*;
+    import java_cup.runtime.*;
 
 
-public class Test
-{
-  Yylex l;
-  parser p;
-
-  public Test(String[] args)
-  {
-    try
+    public class Test
     {
-      Reader input;
-      if (args.length == 0) input = new InputStreamReader(System.in);
-      else input = new FileReader(args[0]);
-      l = new Yylex(input);
-    }
-    catch(IOException e)
-    {
-      System.err.println("Error: File not found: " + args[0]);
-      System.exit(1);
-    }
-    p = new parser(l, l.getSymbolFactory());
-  }
+      Yylex l;
+      latte.parser p;
 
-  public Program parse() throws Exception
-  {
-    /* The default parser is the first-defined entry point. */
-    Program ast = p.pProgram();
-    System.out.println();
-    System.out.println("Parse Succesful!");
-    System.out.println();
-    System.out.println("[Abstract Syntax]");
-    System.out.println();
-    System.out.println(PrettyPrinter.show(ast));
-    System.out.println();
-    System.out.println("[Linearized Tree]");
-    System.out.println();
-    System.out.println(PrettyPrinter.print(ast));
-    return ast;
-  }
+      public Test(String[] args)
+      {
+        try
+        {
+          Reader input;
+          if (args.length == 0) input = new InputStreamReader(System.in);
+          else input = new FileReader(args[0]);
+          l = new Yylex(input);
+        }
+        catch(IOException e)
+        {
+          System.err.println("Error: File not found: " + args[0]);
+          System.exit(1);
+        }
+        p = new latte.parser(l, l.getSymbolFactory());
+      }
 
-  public static void main(String args[]) throws Exception
-  {
-    Test t = new Test(args);
-    try
-    {
-      t.parse();
+      public latte.Absyn.Program parse() throws Exception
+      {
+        /* The default parser is the first-defined entry point. */
+        latte.Absyn.Program ast = p.pProgram();
+        System.out.println();
+        System.out.println("Parse Succesful!");
+        System.out.println();
+        System.out.println("[Abstract Syntax]");
+        System.out.println();
+        System.out.println(PrettyPrinter.show(ast));
+        System.out.println();
+        System.out.println("[Linearized Tree]");
+        System.out.println();
+        System.out.println(PrettyPrinter.print(ast));
+        return ast;
+      }
+
+      public static void main(String args[]) throws Exception
+      {
+        Test t = new Test(args);
+        try
+        {
+          t.parse();
+        }
+        catch(Throwable e)
+        {
+          System.err.println("At line " + String.valueOf(t.l.line_num()) + ", near \"" + t.l.buff() + "\" :");
+          System.err.println("     " + e.getMessage());
+          System.exit(1);
+        }
+      }
     }
-    catch(Throwable e)
-    {
-      System.err.println("At line " + String.valueOf(t.l.line_num()) + ", near \"" + t.l.buff() + "\" :");
-      System.err.println("     " + e.getMessage());
-      System.exit(1);
-    }
-  }
-}

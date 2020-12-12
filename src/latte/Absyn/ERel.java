@@ -6,12 +6,12 @@ public class ERel  extends Expr {
   public int line_num, col_num, offset;
   public ERel(Expr p1, RelOp p2, Expr p3) { expr_1 = p1; relop_ = p2; expr_2 = p3; }
 
-  public <R,A> R accept(Visitor<R,A> v, A arg) { return v.visit(this, arg); }
+  public <R,A> R accept(latte.Absyn.Expr.Visitor<R,A> v, A arg) { return v.visit(this, arg); }
 
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) return true;
-    if (o instanceof ERel) {
-      ERel x = (ERel)o;
+    if (o instanceof latte.Absyn.ERel) {
+      latte.Absyn.ERel x = (latte.Absyn.ERel)o;
       return this.expr_1.equals(x.expr_1) && this.relop_.equals(x.relop_) && this.expr_2.equals(x.expr_2);
     }
     return false;

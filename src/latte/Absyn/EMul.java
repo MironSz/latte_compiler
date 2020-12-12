@@ -6,12 +6,12 @@ public class EMul  extends Expr {
   public int line_num, col_num, offset;
   public EMul(Expr p1, MulOp p2, Expr p3) { expr_1 = p1; mulop_ = p2; expr_2 = p3; }
 
-  public <R,A> R accept(Visitor<R,A> v, A arg) { return v.visit(this, arg); }
+  public <R,A> R accept(latte.Absyn.Expr.Visitor<R,A> v, A arg) { return v.visit(this, arg); }
 
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) return true;
-    if (o instanceof EMul) {
-      EMul x = (EMul)o;
+    if (o instanceof latte.Absyn.EMul) {
+      latte.Absyn.EMul x = (latte.Absyn.EMul)o;
       return this.expr_1.equals(x.expr_1) && this.mulop_.equals(x.mulop_) && this.expr_2.equals(x.expr_2);
     }
     return false;

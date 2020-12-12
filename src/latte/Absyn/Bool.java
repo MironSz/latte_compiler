@@ -4,11 +4,11 @@ public class Bool  extends Type {
   public int line_num, col_num, offset;
   public Bool() { }
 
-  public <R,A> R accept(Visitor<R,A> v, A arg) { return v.visit(this, arg); }
+  public <R,A> R accept(latte.Absyn.Type.Visitor<R,A> v, A arg) { return v.visit(this, arg); }
 
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) return true;
-    if (o instanceof Bool) {
+    if (o instanceof latte.Absyn.Bool) {
       return true;
     }
     return false;

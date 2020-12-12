@@ -6,12 +6,12 @@ public class EApp  extends Expr {
   public int line_num, col_num, offset;
   public EApp(String p1, ListExpr p2) { ident_ = p1; listexpr_ = p2; }
 
-  public <R,A> R accept(Visitor<R,A> v, A arg) { return v.visit(this, arg); }
+  public <R,A> R accept(latte.Absyn.Expr.Visitor<R,A> v, A arg) { return v.visit(this, arg); }
 
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) return true;
-    if (o instanceof EApp) {
-      EApp x = (EApp)o;
+    if (o instanceof latte.Absyn.EApp) {
+      latte.Absyn.EApp x = (latte.Absyn.EApp)o;
       return this.ident_.equals(x.ident_) && this.listexpr_.equals(x.listexpr_);
     }
     return false;

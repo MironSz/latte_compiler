@@ -4,11 +4,11 @@ public class Empty  extends Stmt {
   public int line_num, col_num, offset;
   public Empty() { }
 
-  public <R,A> R accept(Visitor<R,A> v, A arg) { return v.visit(this, arg); }
+  public <R,A> R accept(latte.Absyn.Stmt.Visitor<R,A> v, A arg) { return v.visit(this, arg); }
 
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) return true;
-    if (o instanceof Empty) {
+    if (o instanceof latte.Absyn.Empty) {
       return true;
     }
     return false;

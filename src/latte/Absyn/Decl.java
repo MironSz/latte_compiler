@@ -6,12 +6,12 @@ public class Decl  extends Stmt {
   public int line_num, col_num, offset;
   public Decl(Type p1, ListItem p2) { type_ = p1; listitem_ = p2; }
 
-  public <R,A> R accept(Visitor<R,A> v, A arg) { return v.visit(this, arg); }
+  public <R,A> R accept(latte.Absyn.Stmt.Visitor<R,A> v, A arg) { return v.visit(this, arg); }
 
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) return true;
-    if (o instanceof Decl) {
-      Decl x = (Decl)o;
+    if (o instanceof latte.Absyn.Decl) {
+      latte.Absyn.Decl x = (latte.Absyn.Decl)o;
       return this.type_.equals(x.type_) && this.listitem_.equals(x.listitem_);
     }
     return false;

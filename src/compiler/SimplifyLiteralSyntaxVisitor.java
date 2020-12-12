@@ -16,6 +16,10 @@ public class SimplifyLiteralSyntaxVisitor extends FoldVisitor<Expr, Object> {
         return null;
     }
 
+    @Override
+    public Expr visit(EApp p, Object arg) {
+        return p;
+    }
 
     @Override
     public Expr visit(EAdd p, Object arg) {
@@ -50,7 +54,7 @@ public class SimplifyLiteralSyntaxVisitor extends FoldVisitor<Expr, Object> {
             retExpr = new EMul(e1, p.mulop_, e2);
         }
 
-        return super.visit(p, arg);
+        return retExpr;
     }
 
     @Override
@@ -107,22 +111,33 @@ public class SimplifyLiteralSyntaxVisitor extends FoldVisitor<Expr, Object> {
     }
 
     @Override
+    public Expr visit(EVar p, Object arg) {
+        return p;
+    }
+
+    @Override
+    public Expr visit(EString p, Object arg) {
+        return p;
+    }
+
+    @Override
     public Expr visit(ERel p, Object arg) {
         p.expr_1 = p.expr_1.accept(this, arg);
         p.expr_2 = p.expr_2.accept(this, arg);
-        if (p.relop_ instanceof EQU) {
-            if (p.expr_1.equals(p.expr_2)) {
-                return new ELitTrue();
-            } else {
-                return new ELitFalse();
+        if (p.expr_2.getClass().equals(p.expr_1.getClass()))
+            if (p.relop_ instanceof EQU) {
+                if (p.expr_1.equals(p.expr_2)) {
+                    return new ELitTrue();
+                } else {
+                    return new ELitFalse();
+                }
+            } else if (p.expr_1 instanceof ELitInt && p.expr_2 instanceof ELitInt) {
+                if (checkOp(((ELitInt) p.expr_1).integer_, ((ELitInt) p.expr_2).integer_, p.relop_)) {
+                    return new ELitTrue();
+                } else {
+                    return new ELitFalse();
+                }
             }
-        } else if (p.expr_1 instanceof ELitInt && p.expr_2 instanceof ELitInt) {
-            if (checkOp(((ELitInt) p.expr_1).integer_, ((ELitInt) p.expr_2).integer_, p.relop_)) {
-                return new ELitTrue();
-            } else {
-                return new ELitFalse();
-            }
-        }
         return p;
     }
 
@@ -155,6 +170,15 @@ public class SimplifyLiteralSyntaxVisitor extends FoldVisitor<Expr, Object> {
     }
 
     @Override
+    public Expr visit(Neg p, Object arg) {
+        Expr expr = p.expr_.accept(this, arg);
+        if (expr instanceof ELitInt)
+            return new ELitInt(((ELitInt) p.expr_).integer_ * (-1));
+
+        return p;
+    }
+
+    @Override
     public Expr visit(Not p, Object arg) {
         p.expr_ = p.expr_.accept(this, arg);
         if (p.expr_ instanceof ELitTrue)
@@ -162,6 +186,6 @@ public class SimplifyLiteralSyntaxVisitor extends FoldVisitor<Expr, Object> {
         else if (p.expr_ instanceof ELitFalse)
             return new ELitTrue();
         else
-            return super.visit(p, arg);
+            return p;
     }
 }

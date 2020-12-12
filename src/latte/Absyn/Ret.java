@@ -5,12 +5,12 @@ public class Ret  extends Stmt {
   public int line_num, col_num, offset;
   public Ret(Expr p1) { expr_ = p1; }
 
-  public <R,A> R accept(Visitor<R,A> v, A arg) { return v.visit(this, arg); }
+  public <R,A> R accept(latte.Absyn.Stmt.Visitor<R,A> v, A arg) { return v.visit(this, arg); }
 
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) return true;
-    if (o instanceof Ret) {
-      Ret x = (Ret)o;
+    if (o instanceof latte.Absyn.Ret) {
+      latte.Absyn.Ret x = (latte.Absyn.Ret)o;
       return this.expr_.equals(x.expr_);
     }
     return false;

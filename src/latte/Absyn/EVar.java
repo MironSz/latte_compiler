@@ -5,12 +5,12 @@ public class EVar  extends Expr {
   public int line_num, col_num, offset;
   public EVar(String p1) { ident_ = p1; }
 
-  public <R,A> R accept(Visitor<R,A> v, A arg) { return v.visit(this, arg); }
+  public <R,A> R accept(latte.Absyn.Expr.Visitor<R,A> v, A arg) { return v.visit(this, arg); }
 
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) return true;
-    if (o instanceof EVar) {
-      EVar x = (EVar)o;
+    if (o instanceof latte.Absyn.EVar) {
+      latte.Absyn.EVar x = (latte.Absyn.EVar)o;
       return this.ident_.equals(x.ident_);
     }
     return false;
