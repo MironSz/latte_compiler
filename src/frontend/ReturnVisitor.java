@@ -1,4 +1,4 @@
-package compiler;
+package frontend;
 
 import latte.Absyn.Void;
 import latte.Absyn.*;

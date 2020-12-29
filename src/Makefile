@@ -9,7 +9,7 @@ LEXER_FLAGS=
 all : main
 	./buildJar.sh
 
-main : absyn latte/Yylex.class latte/PrettyPrinter.class compiler/SemanticErrorMessage.class compiler/DeclarationContext.class compiler/DeclarationVisitor.class compiler/SimplifyLiteralSyntaxVisitor.class compiler/ReturnVisitor.class  latte/Main.class latte/VisitSkel.class latte/ComposVisitor.class latte/AbstractVisitor.class latte/FoldVisitor.class latte/AllVisitor.class latte/parser.class latte/sym.class latte/Test.class
+main : absyn Main.class latte/Yylex.class latte/PrettyPrinter.class frontend/RemoveDuplicatesContext.java frontend/RemoveDuplicatesVisitor.java frontend/SemanticErrorMessage.class frontend/DeclarationContext.class frontend/DeclarationVisitor.class frontend/SimplifyLiteralSyntaxVisitor.class frontend/ReturnVisitor.class   latte/VisitSkel.class latte/ComposVisitor.class latte/AbstractVisitor.class latte/FoldVisitor.class latte/AllVisitor.class latte/parser.class latte/sym.class latte/Test.class
 
 
 .PHONY : absyn

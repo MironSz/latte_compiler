@@ -1,4 +1,4 @@
-package compiler;
+package frontend;
 
 public class SemanticErrorMessage {
     public static String buildMessage(int line, int collumn, String message) {

@@ -1,4 +1,4 @@
-package compiler;
+package frontend;
 
 import latte.Absyn.Void;
 import latte.Absyn.*;
@@ -69,6 +69,14 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
 
         }
         for (Item item : p.listitem_) {
+            if(item instanceof Init){
+                Type lType = p.type_;
+                Type rType = item.accept(this,arg);
+                if(!lType.equals(rType)){
+                    throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num, p.col_num,
+                            "Cannot assign "+rType.getClass().toString()+" to "+lType.getClass().toString()));
+                }
+            }
             arg = arg.declareNewVar(item.ident_, p.type_, p.line_num, p.col_num);
         }
         return super.visit(p, arg);
@@ -91,7 +99,7 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
     @Override
     public Type visit(Incr p, DeclarationContext arg) {
         if (!arg.isDeclared(p.ident_, new Int(), p.line_num, p.col_num)) {
-            throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num, p.col_num, "Wrong type or undeclared variable (Incr)"));
+            throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num, p.col_num, "Wrong type or undeclared variable"));
         }
         return null;
     }
@@ -99,7 +107,7 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
     @Override
     public Type visit(Decr p, DeclarationContext arg) {
         if (!arg.isDeclared(p.ident_, new Int(), p.line_num, p.col_num)) {
-            throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num, p.col_num, "Wrong type or undeclared variable (Decr)"));
+            throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num, p.col_num, "Wrong type or undeclared variable"));
         }
         return null;
     }
@@ -203,10 +211,10 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
     @Override
     public Type visit(Init p, DeclarationContext arg) {
         Type rType = p.expr_.accept(this, arg);
-        if (!arg.isDeclared(p.ident_, rType, p.line_num, p.col_num)) {
-            throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num, p.col_num, "Wrong type or undeclared variable (Init)"));
-        }
-        return null;
+//        if (!arg.isDeclared(p.ident_, rType, p.line_num, p.col_num)) {
+//            throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num, p.col_num, "Wrong type or undeclared variable (Init)"));
+//        }
+        return rType;
     }
 
 

@@ -1,9 +1,9 @@
-package latte;
-
-import compiler.DeclarationContext;
-import compiler.DeclarationVisitor;
-import compiler.ReturnVisitor;
-import compiler.SimplifyLiteralSyntaxVisitor;
+import frontend.*;
+import latte.Yylex;
+import quadCode.syntax.Block;
+import quadCode.translator.CalculateExpressionVisitor;
+import quadCode.translator.ReturnType;
+import quadCode.translator.TranslationContext;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -31,6 +31,7 @@ public class Main {
     public static void main(String args[]) throws Exception {
         Main t = new Main(args);
         latte.Absyn.Program program = null;
+        ReturnType returnType;
         try {
             try {
                 program = t.parse();
@@ -40,9 +41,16 @@ public class Main {
             program.accept(new SimplifyLiteralSyntaxVisitor(), null);
             program.accept(new ReturnVisitor(), false);
             program.accept(new DeclarationVisitor(), new DeclarationContext());
+            program.accept(new RemoveDuplicatesVisitor(),new RemoveDuplicatesContext());
+            program.accept(new DeclarationVisitor(), new DeclarationContext());
+
+            returnType = program.accept(new CalculateExpressionVisitor(), new TranslationContext());
+            for(Block block: Block.allBlocks){
+                System.out.println(block.toString()+"\n\n");
+            }
         } catch (Throwable e) {
             System.err.println(e.getMessage());
-//            e.printStackTrace();
+            e.printStackTrace();
             System.exit(1);
         }
 
