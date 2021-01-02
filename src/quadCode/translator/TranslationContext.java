@@ -20,10 +20,6 @@ public class TranslationContext {
         currentBlock=null;
     }
 
-    public void closeCurrentBlock(List<Instruction> instructions) {
-//        currentBlock.setInstructions(instructions);
-        currentBlock=null;
-    }
 
     public String getNewResultVar() {
         newVarCounter++;

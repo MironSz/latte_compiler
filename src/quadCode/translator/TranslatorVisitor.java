@@ -3,41 +3,33 @@ package quadCode.translator;
 import latte.Absyn.*;
 import latte.FoldVisitor;
 import quadCode.syntax.Block;
-import quadCode.syntax.instructions.BinaryInstruction;
-import quadCode.syntax.instructions.Instruction;
-import quadCode.syntax.instructions.LitInstruction;
-import quadCode.syntax.instructions.ReturnInstruction;
+import quadCode.syntax.instructions.*;
 import quadCode.syntax.jumps.CondJump;
 import quadCode.syntax.jumps.SimpleJump;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-
-public class CalculateExpressionVisitor extends FoldVisitor<ReturnType, TranslationContext> {
+public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContext> {
     @Override
     public ReturnType leaf(TranslationContext arg) {
-        return new ReturnType("", new LinkedList<>());
+        return new ReturnType("");
     }
 
     @Override
     public ReturnType combine(ReturnType x, ReturnType y, TranslationContext arg) {
-        List<Instruction> result = new LinkedList<>();
-        y.instructions.forEach(i -> result.add(i));
-        x.instructions.forEach(i -> result.add(i));
-
-        return new ReturnType(y.getResultVar(), result);
+//        List<Instruction> result = new LinkedList<>();
+//        y.instructions.forEach(i -> result.add(i));
+//        x.instructions.forEach(i -> result.add(i));
+        return y;
     }
 
     ReturnType visitTrinaryExpression(Expr expr, Expr lExpr, Expr rExpr, TranslationContext arg) {
         ReturnType rLeft = lExpr.accept(this, arg);
         ReturnType rRight = rExpr.accept(this, arg);
+
         String resultVar = arg.getNewResultVar();
         Instruction instruction = new BinaryInstruction(rLeft.getResultVar(), rRight.getResultVar(), resultVar, expr);
-        ReturnType result = combine(rLeft, rRight, arg);
 
-        result.addInstruction(instruction);
-        arg.currentBlock.addInstructions(Arrays.asList(instruction));
+        ReturnType result = combine(rLeft, rRight, arg);
+        arg.currentBlock.addInstruction(instruction);
 
         return result;
     }
@@ -51,9 +43,9 @@ public class CalculateExpressionVisitor extends FoldVisitor<ReturnType, Translat
     ReturnType visitLiteralExpression(Expr p, TranslationContext arg) {
         String varName = arg.getNewResultVar();
         Instruction instruction = new LitInstruction(varName, p);
-        arg.currentBlock.addInstructions(Arrays.asList(instruction));
+        arg.currentBlock.addInstruction(instruction);
 
-        return new ReturnType(varName, Arrays.asList(instruction));
+        return new ReturnType(varName);
     }
 
     @Override
@@ -82,7 +74,19 @@ public class CalculateExpressionVisitor extends FoldVisitor<ReturnType, Translat
         condJump.setFalseBlock(arg.currentBlock);
 
 
-        return new ReturnType("", new LinkedList<>());
+        return new ReturnType("");
+    }
+
+    @Override
+    public ReturnType visit(EApp p, TranslationContext arg) {
+        for (Expr expr : p.listexpr_) {
+            ReturnType returnType = expr.accept(this, arg);
+            arg.currentBlock.addInstruction(new ParamInnstruction(returnType.getResultVar()));
+        }
+        String resultVar = arg.getNewResultVar();
+        Instruction instruction = new CallInstruction(resultVar, p.ident_);
+        arg.currentBlock.addInstruction(instruction);
+        return new ReturnType(resultVar);
     }
 
     @Override
@@ -107,7 +111,7 @@ public class CalculateExpressionVisitor extends FoldVisitor<ReturnType, Translat
         condJump.setFalseBlock(arg.currentBlock);
 
 
-        return new ReturnType("", new LinkedList<>());
+        return new ReturnType("");
     }
 
     @Override
@@ -135,7 +139,7 @@ public class CalculateExpressionVisitor extends FoldVisitor<ReturnType, Translat
         arg.openNewBlock(label3);
         finalJump.setNextBlock(arg.currentBlock);
 
-        return new ReturnType("", new LinkedList<>());
+        return new ReturnType("");
     }
 
     @Override
@@ -154,6 +158,11 @@ public class CalculateExpressionVisitor extends FoldVisitor<ReturnType, Translat
     }
 
     @Override
+    public ReturnType visit(EString p, TranslationContext arg) {
+        return visitLiteralExpression(p, arg);
+    }
+
+    @Override
     public ReturnType visit(Ass p, TranslationContext arg) {
         ReturnType instructions = p.expr_.accept(this, arg);
         instructions.setResultVar(p.ident_);
@@ -163,15 +172,14 @@ public class CalculateExpressionVisitor extends FoldVisitor<ReturnType, Translat
 
     @Override
     public ReturnType visit(EVar p, TranslationContext arg) {
-        return new ReturnType(p.ident_, new LinkedList<>());
+        return new ReturnType(p.ident_);
     }
 
     @Override
     public ReturnType visit(Ret p, TranslationContext arg) {
         ReturnType calcInstructions = p.expr_.accept(this, arg);
 //        calcInstructions.addInstruction(new ReturnInstruction(calcInstructions.getResultVar()));
-        arg.currentBlock.addInstructions(Arrays.asList(new ReturnInstruction(calcInstructions.getResultVar())));
-        arg.closeCurrentBlock(calcInstructions.instructions);
+        arg.currentBlock.addInstruction(new ReturnInstruction(calcInstructions.getResultVar()));
         return calcInstructions;
     }
 

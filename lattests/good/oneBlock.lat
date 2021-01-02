@@ -1,18 +1,15 @@
 int main() {
-  int x1,x2,x3,x;
-  int y;
-  x=1;
-  y=2;
-//  int q=x+x;
-//   if(x+x==x){
-//        x=5;
-//   } else{
-//        y=42;
-//   }
-   while(x<10){
-    x=x-1;
-   }
-  int z;
-  z=x+y;
-  return z ;
+  f(1,2);
+  return 0;
 }
+
+void f(int x, int y) {
+  if (y > x || e())
+    printString("yes");
+}
+
+boolean e() {
+  printString("NOOO");
+  return false;
+  }
+

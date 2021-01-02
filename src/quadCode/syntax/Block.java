@@ -41,6 +41,10 @@ public class Block {
         this.instructions.addAll(instructions);
     }
 
+    public void addInstruction(Instruction instruction) {
+        this.instructions.add(instruction);
+    }
+
     public void setResultVar(String name){
         instructions.get(instructions.size()-1).setResultVar(name);
     }

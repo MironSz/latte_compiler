@@ -1,5 +1,7 @@
 package quadCode.syntax.instructions;
 
+import assembly.AssemblyTranslator;
+import assembly.memory.MemoryManagement;
 import latte.Absyn.Expr;
 
 public class LitInstruction extends Instruction {
@@ -19,6 +21,11 @@ public class LitInstruction extends Instruction {
     @Override
     public String getResultVar() {
         return varName;
+    }
+
+    @Override
+    public void translate(AssemblyTranslator assemblyTranslator, MemoryManagement memoryManagement) {
+        assemblyTranslator.translate(this,memoryManagement);
     }
 
     @Override

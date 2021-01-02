@@ -8,14 +8,20 @@ import java.util.HashMap;
 import java.util.stream.Collectors;
 
 public class DeclarationContext {
-    private static HashMap<Serializable, DeclarationContext> scopeToDeclaration;
+    private static HashMap<Object,Type> types = new HashMap<>();
     private final HashMap<String, Type> nameToType;
     private Type expectedResultType;
     private DeclarationContext parent;
-//    private final InstrOrderContext instrOrderContext;
-
+    public static Type getType(Expr exp){
+        return types.get(exp);
+    }
+    public void saveType(Object object, Type type){
+        types.put(object,type);
+    }
+    public static void clearTypesMap(){
+        types.clear();
+    }
     public DeclarationContext() {
-//        this.instrOrderContext = instrOrderContext;
         nameToType = new HashMap<>();
 
         ListType printStringTypes = new ListType();

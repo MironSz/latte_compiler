@@ -169,6 +169,7 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
 
     @Override
     public Type visit(SExp p, DeclarationContext arg) {
+
         return super.visit(p, arg);
     }
 
@@ -199,7 +200,9 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
 
     @Override
     public Type visit(EVar p, DeclarationContext arg) {
-        return arg.getTypeOfVar(p.ident_, p.line_num, p.col_num);
+        Type type = arg.getTypeOfVar(p.ident_, p.line_num, p.col_num);
+        arg.saveType(p,type);
+        return type;
     }
 
     //TODO I think no action is needed.
@@ -220,16 +223,19 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
 
     @Override
     public Type visit(ELitInt p, DeclarationContext arg) {
+        arg.saveType(p,new Int());
         return new Int();
     }
 
     @Override
     public Type visit(ELitTrue p, DeclarationContext arg) {
+        arg.saveType(p,new Bool());
         return new Bool();
     }
 
     @Override
     public Type visit(ELitFalse p, DeclarationContext arg) {
+        arg.saveType(p,new Bool());
         return new Bool();
     }
 
@@ -245,19 +251,25 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
         if (!argumentsTypes.equals(expectedTypes)) {
             throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num, p.col_num, "Arguments mismatch in function call"));
         }
+        arg.saveType(p,functionType.type_);
 
         return functionType.type_;
     }
 
     @Override
     public Type visit(EString p, DeclarationContext arg) {
+        arg.saveType(p,new Str());
+
         return new Str();
     }
 
     @Override
     public Type visit(Neg p, DeclarationContext arg) {
-        if (super.visit(p, arg) instanceof Int)
+        if (super.visit(p, arg) instanceof Int) {
+            arg.saveType(p, new Int());
+
             return new Int();
+        }
         else {
             throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num, p.col_num, "Wrong type"));
         }
@@ -265,8 +277,10 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
 
     @Override
     public Type visit(Not p, DeclarationContext arg) {
-        if (super.visit(p, arg) instanceof Bool)
+        if (super.visit(p, arg) instanceof Bool) {
+            arg.saveType(p, new Bool());
             return new Bool();
+        }
         else {
             throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num, p.col_num, "Wrong type"));
         }
@@ -277,6 +291,8 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
         Type t2 = ex2.accept(this, arg);
         if (!(t1.equals(expectedTypes) && t2.equals(expectedTypes)))
             throw new RuntimeException(errorMessage);
+        arg.saveType(expr, expectedTypes);
+
         return expectedTypes;
     }
 
@@ -310,13 +326,14 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
             return new Bool();
         }
         visitTrinaryOperation(p, new Int(), SemanticErrorMessage.buildMessage(p.line_num, p.col_num, "Wrong type in comparison"), arg, p.expr_1, p.expr_2);
+        arg.saveType(p, new Bool());
+
         return new Bool();
 
     }
 
     @Override
     public Type visit(EAnd p, DeclarationContext arg) {
-
         return visitTrinaryOperation(p, new Bool(), SemanticErrorMessage.buildMessage(p.line_num, p.col_num, "Wrong type in and"), arg, p.expr_1, p.expr_2);
     }
 

@@ -1,5 +1,7 @@
 package quadCode.syntax.instructions;
 
+import assembly.AssemblyTranslator;
+import assembly.memory.MemoryManagement;
 import latte.Absyn.Expr;
 
 public class BinaryInstruction extends Instruction {
@@ -21,6 +23,11 @@ public class BinaryInstruction extends Instruction {
     }
 
     @Override
+    public void translate(AssemblyTranslator assemblyTranslator, MemoryManagement memoryManagement) {
+        assemblyTranslator.translate(this,memoryManagement);
+    }
+
+    @Override
     public void setResultVar(String resultVar) {
         this.resultVar = resultVar;
     }
@@ -28,5 +35,17 @@ public class BinaryInstruction extends Instruction {
     @Override
     public String toString() {
         return resultVar+" = "+leftVar+ " "+expr.getClass().toString()+" "+rightVar;
+    }
+
+    public String getLeftVar() {
+        return leftVar;
+    }
+
+    public String getRightVar() {
+        return rightVar;
+    }
+
+    public Expr getExpr() {
+        return expr;
     }
 }
