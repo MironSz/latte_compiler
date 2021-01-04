@@ -1,8 +1,9 @@
 package quadCode.syntax.instructions;
 
 import assembly.AssemblyTranslator;
-import assembly.memory.MemoryManagement;
+import assembly.memory.MemoryManager;
 import latte.Absyn.Expr;
+import quadCode.translator.TranslationContext;
 
 public class BinaryInstruction extends Instruction {
     InstructionArgument leftVar, rightVar;
@@ -11,6 +12,8 @@ public class BinaryInstruction extends Instruction {
 
 
     public BinaryInstruction(InstructionArgument leftVar, InstructionArgument rightVar, String resultVar, Expr expr) {
+        TranslationContext.addVarToFunction(resultVar);
+
         this.leftVar = leftVar;
         this.rightVar = rightVar;
         this.resultVar = resultVar;
@@ -23,7 +26,7 @@ public class BinaryInstruction extends Instruction {
     }
 
     @Override
-    public void translate(AssemblyTranslator assemblyTranslator, MemoryManagement memoryManagement) {
+    public void translate(AssemblyTranslator assemblyTranslator, MemoryManager memoryManagement) {
         assemblyTranslator.translate(this,memoryManagement);
     }
 

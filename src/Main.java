@@ -1,3 +1,7 @@
+import assembly.AssemblyTranslator;
+import assembly.memory.MemoryManager;
+import assembly.memory.Producer;
+import assembly.memory.locations.Register;
 import frontend.*;
 import latte.Yylex;
 import quadCode.syntax.Block;
@@ -9,6 +13,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Arrays;
+import java.util.LinkedList;
 
 
 public class Main {
@@ -51,6 +57,18 @@ public class Main {
             for(Block block: Block.allBlocks){
                 System.out.println(block.toString()+"\n\n");
             }
+
+            AssemblyTranslator assemblyTranslator = new AssemblyTranslator();
+            assemblyTranslator.translate(new LinkedList<>(Block.allBlocks),
+                    new MemoryManager(
+                            Arrays.asList(
+                                    new Register("eax"),
+//                                    new Register("r2"),
+                                    new Register("r1"),
+                                    new Register("r3"),
+                                    new Register("r4"))));
+            Producer.instructions.forEach(System.out::println);
+
         } catch (Throwable e) {
             System.err.println(e.getMessage());
             e.printStackTrace();

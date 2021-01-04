@@ -1,14 +1,17 @@
 package quadCode.syntax.instructions;
 
 import assembly.AssemblyTranslator;
-import assembly.memory.MemoryManagement;
+import assembly.memory.MemoryManager;
 import latte.Absyn.FnDef;
+import quadCode.translator.TranslationContext;
 
 public class CallInstruction extends Instruction{
     String resultVar;
     String function;
 
     public CallInstruction(String resultVar, String function) {
+        TranslationContext.addVarToFunction(resultVar);
+
         this.resultVar = resultVar;
         this.function = function;
     }
@@ -24,7 +27,7 @@ public class CallInstruction extends Instruction{
     }
 
     @Override
-    public void translate(AssemblyTranslator assemblyTranslator, MemoryManagement memoryManagement) {
+    public void translate(AssemblyTranslator assemblyTranslator, MemoryManager memoryManagement) {
         assemblyTranslator.translate(this,memoryManagement);
     }
 

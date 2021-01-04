@@ -1,7 +1,7 @@
 package quadCode.syntax.instructions;
 
 import assembly.AssemblyTranslator;
-import assembly.memory.MemoryManagement;
+import assembly.memory.MemoryManager;
 
 public class ParamInnstruction extends Instruction{
     InstructionArgument param;
@@ -21,7 +21,7 @@ public class ParamInnstruction extends Instruction{
     }
 
     @Override
-    public void translate(AssemblyTranslator assemblyTranslator, MemoryManagement memoryManagement) {
+    public void translate(AssemblyTranslator assemblyTranslator, MemoryManager memoryManagement) {
         assemblyTranslator.translate(this,memoryManagement);
     }
 

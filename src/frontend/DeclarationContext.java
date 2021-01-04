@@ -3,24 +3,19 @@ package frontend;
 import latte.Absyn.Void;
 import latte.Absyn.*;
 
-import java.io.Serializable;
-import java.util.HashMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class DeclarationContext {
-    private static HashMap<Object,Type> types = new HashMap<>();
+    private static HashMap<Object, Type> types = new HashMap<>();
+    private static Map<String, Integer> paramsNumberInFunction = new HashMap<>();
     private final HashMap<String, Type> nameToType;
     private Type expectedResultType;
     private DeclarationContext parent;
-    public static Type getType(Expr exp){
-        return types.get(exp);
-    }
-    public void saveType(Object object, Type type){
-        types.put(object,type);
-    }
-    public static void clearTypesMap(){
-        types.clear();
-    }
+
+
+
+    private String currentFunction;
     public DeclarationContext() {
         nameToType = new HashMap<>();
 
@@ -43,20 +38,49 @@ public class DeclarationContext {
     private DeclarationContext(DeclarationContext declarationContext) {
         this();
         this.parent = declarationContext;
+        this.currentFunction = declarationContext.currentFunction;
+    }
+
+    public static Type getType(Expr exp) {
+        return types.get(exp);
+    }
+
+
+    public static Integer numberOfParamsInFunction(String function) {
+        return paramsNumberInFunction.getOrDefault(function, 0);
+    }
+
+    public  void incrementNumberOfParamsInFunction() {
+        paramsNumberInFunction.put(currentFunction, numberOfParamsInFunction(currentFunction) + 1);
+    }
+
+    public static void clearTypesMap() {
+        types.clear();
+        paramsNumberInFunction.clear();
+    }
+
+    public void saveType(Object object, Type type) {
+        types.put(object, type);
     }
 
     public Fun functionToFunctionType(FnDef fnDef) {
         return new Fun(fnDef.type_, fnDef.listarg_.stream().map(arg -> ((ArgCode) arg).type_).collect(Collectors.toCollection(ListType::new)));
     }
+    public void setCurrentFunction(String currentFunction) {
+        this.currentFunction = currentFunction;
+    }
 
+    public String getCurrentFunction() {
+        return currentFunction;
+    }
 
-    public Type getTypeOfVar(String name, int line,int col) {
+    public Type getTypeOfVar(String name, int line, int col) {
         for (DeclarationContext currentContext = this; currentContext != null; currentContext = currentContext.parent) {
             if (currentContext.nameToType.containsKey(name)) {
                 return currentContext.nameToType.get(name);
             }
         }
-        throw new RuntimeException(SemanticErrorMessage.buildMessage(line,col,"Variable "+name+" undeclared"));
+        throw new RuntimeException(SemanticErrorMessage.buildMessage(line, col, "Variable " + name + " undeclared"));
     }
 
     public DeclarationContext newScope() {
@@ -82,14 +106,14 @@ public class DeclarationContext {
 //        DeclarationContext result = this.newScope();
         DeclarationContext result = this;
         if (result.nameToType.containsKey(name)) {
-            throw new RuntimeException(SemanticErrorMessage.buildMessage(line,col,"Variable "+name+" previously declared"));
+            throw new RuntimeException(SemanticErrorMessage.buildMessage(line, col, "Variable " + name + " previously declared"));
         }
         result.nameToType.put(name, type);
         return result;
     }
 
     public boolean isDeclared(String name, Type type, int line, int col) {
-        Type type2 = this.getTypeOfVar(name,line,col);
+        Type type2 = this.getTypeOfVar(name, line, col);
         return type.equals(type2);
     }
 }

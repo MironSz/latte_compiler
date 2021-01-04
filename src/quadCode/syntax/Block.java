@@ -41,6 +41,10 @@ public class Block {
         this.instructions.addAll(instructions);
     }
 
+    public List<Instruction> getInstructions() {
+        return instructions;
+    }
+
     public void addInstruction(Instruction instruction) {
         this.instructions.add(instruction);
     }

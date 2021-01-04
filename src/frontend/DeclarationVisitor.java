@@ -38,7 +38,7 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
 
             }
         }
-
+        arg.setCurrentFunction(p.ident_);
         for (Arg argument : p.listarg_) {
             argument.accept(this, arg);
         }
@@ -51,6 +51,7 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
         if (p.type_ instanceof Void) {
             throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num, p.col_num, "Function argument of type \"Void\" is forbidden"));
         }
+        arg.incrementNumberOfParamsInFunction();
         arg = arg.declareNewVar(p.ident_, p.type_, p.line_num, p.col_num);
         return super.visit(p, arg);
     }

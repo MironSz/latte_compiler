@@ -34,6 +34,7 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
     @Override
     public ReturnType visit(FnDef p, TranslationContext arg) {
         arg.openNewBlock(p.ident_);
+        TranslationContext.setCurrentFunction(p.ident_);
         return super.visit(p, arg);
     }
 

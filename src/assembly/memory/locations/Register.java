@@ -1,24 +1,18 @@
 package assembly.memory.locations;
 
 import assembly.memory.MemoryLocation;
-import latte.Absyn.Str;
-import quadCode.syntax.instructions.InstructionArgument;
 
-import java.util.List;
+import java.util.Objects;
 
 public class Register extends MemoryLocation {
     String registerName;
 
-    public void addVar(String varName){
-
+    public Register(String registerName) {
+        this.registerName = registerName;
     }
 
     public String getRegisterName() {
         return registerName;
-    }
-
-    public Register(String registerName) {
-        this.registerName = registerName;
     }
 
     @Override
@@ -26,4 +20,16 @@ public class Register extends MemoryLocation {
         return registerName;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Register register = (Register) o;
+        return Objects.equals(registerName, register.registerName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(registerName);
+    }
 }

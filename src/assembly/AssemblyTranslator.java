@@ -1,8 +1,9 @@
 package assembly;
 
 import assembly.memory.MemoryLocation;
-import assembly.memory.MemoryManagement;
+import assembly.memory.MemoryManager;
 import assembly.memory.Producer;
+import assembly.memory.locations.LitPseudoLocation;
 import assembly.memory.locations.Register;
 import frontend.DeclarationContext;
 import latte.Absyn.EAdd;
@@ -12,128 +13,107 @@ import quadCode.syntax.Block;
 import quadCode.syntax.instructions.*;
 import quadCode.syntax.jumps.BlockJump;
 import quadCode.syntax.jumps.SimpleJump;
+import quadCode.translator.TranslationContext;
 
 import java.util.List;
+
+import static assembly.AssemblyInstructions.*;
 
 //Wynik w eaxie
 public class AssemblyTranslator extends Producer {
 
-    private void translateSingleBlock(Block block) {
-
+    private void translateSingleBlock(Block block, MemoryManager memoryManager) {
+        translateLabel(block.getLabel());
+        block.getInstructions().forEach(instruction -> instruction.translate(this, memoryManager));
+        translate(block.getNextBlock(), memoryManager);
+        block.getNextBlock().allNextBlocks().forEach(block1 -> translateSingleBlock(block1, memoryManager));
     }
 
     private void codePrefix() {
-        emmitAssemblyInstruction("call main");
-//        emmitAssemblyInstruction("mov ");
-        emmitAssemblyInstruction(movInstruction());
-        emmitAssemblyInstruction("int 0x80");
+        emmitAssemblyInstruction("    global    _start");
+        emmitAssemblyInstruction("    section   .text");
+        emmitAssemblyInstruction("_start:");
+        emmitAssemblyInstruction(callInstruction("main"));
+        emmitAssemblyInstruction(movInstruction(new Register("eax"), new Register("edi")));
+//        emmitAssemblyInstruction(movInstruction());
+        emmitAssemblyInstruction(movInstruction(new Register("rax"), new LitPseudoLocation("60")));
+        emmitAssemblyInstruction("    syscall");
+        emmitAssemblyInstruction("");
+        emmitAssemblyInstruction("    section .data");
     }
 
-    public void translate(List<Block> blocks) {
-        blocks.forEach(this::translateSingleBlock);
+    public void translate(List<Block> blocks, MemoryManager memoryManager) {
+        codePrefix();
+        blocks.forEach(block -> {
+            if (TranslationContext.allFunctions().contains(block.getLabel())) {
+                memoryManager.initManagerForFunction(block.getLabel(),
+                        TranslationContext.varsInFunction(block.getLabel()),
+                        DeclarationContext.numberOfParamsInFunction(block.getLabel()));
+                translateSingleBlock(block, memoryManager);
+            }
+        });
     }
 
-    private void translateLabal(String label) {
+    private void translateLabel(String label) {
         emmitAssemblyInstruction(label + ":");
     }
 
-    private void translate(BlockJump blockJump) {
+    private void translate(BlockJump blockJump, MemoryManager memoryManager) {
         if (blockJump instanceof SimpleJump) {
-            emmitAssemblyInstruction("jmp " + blockJump.allNextBlocks().get(0).getLabel());
+            emmitAssemblyInstruction(jmpInstruction( blockJump.allNextBlocks().get(0).getLabel()));
         } else {
             emmitAssemblyInstruction("TODO " + blockJump);
         }
     }
 
 
-    private String movInstruction(MemoryLocation from, MemoryLocation to) {
-        return "mov " + from.toString() + "," + to.toString();
-    }
-
-    private String movInstruction(String from, String to) {
-        return "mov " + from.toString() + "," + to.toString();
-    }
-
-    private String pushInstruction(MemoryLocation x){
-        return "push "+x.toString();
-    }
-    // x+=y
-    private String addInstruction(MemoryLocation x, MemoryLocation y, boolean plus) {
-        if (plus)
-            return "add " + x.toString() + "," + y.toString();
-        else
-            return "sub " + x.toString() + "," + y.toString();
-
-    }
-
-    private String callInstruction(String functionName) {
-        return "call " + functionName;
-    }
-
-    public Register moveArgumentToRegister(InstructionArgument argument, MemoryManagement memoryManagement) {
-        if (argument instanceof VarArgument && memoryManagement.getRegistersForVar(argument).size() > 0) {
-            return memoryManagement.getRegistersForVar(argument).get(0);
-        }
-
-        Register resultRegister = memoryManagement.getFreeRegister();
-        String assemblyInstruction;
-        assemblyInstruction = movInstruction(memoryManagement.getMemoryLocation(argument), resultRegister);
-        emmitAssemblyInstruction(assemblyInstruction);
-        return resultRegister;
-    }
-
-
-    public void translate(BinaryInstruction instruction, MemoryManagement memoryManagement) {
+    public void translate(BinaryInstruction instruction, MemoryManager memoryManager) {
         if (DeclarationContext.getType(instruction.getExpr()) instanceof Int) {
             if (instruction.getExpr() instanceof EAdd) {
-                Register resultRegister = moveArgumentToRegister(instruction.getLeftVar(), memoryManagement);
-
+                Register resultRegister = memoryManager.getRegisterContaining(instruction.getLeftVar(), true, false);
+                MemoryLocation rightVarLocation = memoryManager.getLocation(instruction.getRightVar());
 
                 String addInstruction = addInstruction(resultRegister,
-                        memoryManagement.getMemoryLocation(instruction.getRightVar()),
+                        rightVarLocation,
                         ((EAdd) instruction.getExpr()).addop_ instanceof Plus);
 
                 emmitAssemblyInstruction(addInstruction);
-                memoryManagement.removeVarFromRegisters(instruction.getResultVar());
-                memoryManagement.addVarToRegister(instruction.getResultVar(), resultRegister);
+                memoryManager.removeVarFromOtherLocations(new VarArgument(instruction.getResultVar()), resultRegister);
+                memoryManager.addVarToSpecificLocation(resultRegister, new VarArgument(instruction.getResultVar()));
             }
         }
     }
 
     //    x=y; (z założenia x!=y)
-    public void translate(AssignmentInstruction instruction, MemoryManagement memoryManagement) {
-        memoryManagement.removeVarFromRegisters(instruction.getLeftVar());
-        List<Register> registers = memoryManagement.getRegistersForVar(instruction.getRightVar());
-        if (registers.isEmpty()) {
-            Register resultRegister = moveArgumentToRegister(instruction.getRightVar(), memoryManagement);
-            resultRegister.addVar(instruction.getLeftVar());
-            registers.add(resultRegister);
-        }
-        registers.forEach(register -> memoryManagement.addVarToRegister(instruction.getLeftVar(), register));
+    public void translate(AssignmentInstruction instruction, MemoryManager memoryManager) {
+        memoryManager.equate(new VarArgument(instruction.getResultVar()), instruction.getRightVar());
     }
 
-    public void translate(CallInstruction instruction, MemoryManagement memoryManagement) {
-        memoryManagement.saveState();
+    public void translate(CallInstruction instruction, MemoryManager memoryManager) {
+        memoryManager.dumpAllDataToMem();
         emmitAssemblyInstruction(callInstruction(instruction.getFunction()));
         if (instruction.getResultVar() != null && !instruction.getResultVar().equals("")) {
-            memoryManagement.addVarToRegister(instruction.getResultVar(), memoryManagement.getSpecificRegister("eax"));
+            memoryManager.addVarToSpecificLocation(
+                    memoryManager.getSpecificRegister("eax"),
+                    new VarArgument(instruction.getResultVar())
+            );
         }
-        memoryManagement.restoreState();
+        memoryManager.restoreAllData(DeclarationContext.numberOfParamsInFunction(instruction.getFunction()));
     }
 
-    public void translate(LitInstruction instruction, MemoryManagement memoryManagement) {
-
+    public void translate(LitInstruction instruction, MemoryManager memoryManager) {
+        MemoryLocation location = new LitPseudoLocation(instruction.getLit());
+        memoryManager.addVarToSpecificLocation(location, new VarArgument(instruction.getResultVar()));
     }
 
-    public void translate(ParamInnstruction instruction, MemoryManagement memoryManagement) {
-        String push = pushInstruction(memoryManagement.getMemoryLocation(instruction.getParam()));
+    public void translate(ParamInnstruction instruction, MemoryManager memoryManager) {
+        String push = pushInstruction(memoryManager.getLocation(instruction.getParam()));
+        memoryManager.incrementParamsOnStackCounter();
         emmitAssemblyInstruction(push);
     }
 
-    public void translate(ReturnInstruction instruction, MemoryManagement memoryManagement) {
-        MemoryLocation resultLocation = memoryManagement.getMemoryLocation(instruction.getResultVar());
-        Register returnRegister = memoryManagement.getSpecificRegister("eax");
-        String returnAssemblyInstruction = movInstruction(resultLocation, returnRegister);
-        emmitAssemblyInstruction(returnAssemblyInstruction);
+    public void translate(ReturnInstruction instruction, MemoryManager memoryManager) {
+        Register returnRegister = memoryManager.getSpecificRegister("eax");
+        memoryManager.addVarToSpecificLocation(returnRegister, new VarArgument(instruction.getResultVar()));
     }
 }

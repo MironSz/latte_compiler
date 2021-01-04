@@ -1,13 +1,15 @@
 package quadCode.syntax.instructions;
 
 import assembly.AssemblyTranslator;
-import assembly.memory.MemoryManagement;
+import assembly.memory.MemoryManager;
+import quadCode.translator.TranslationContext;
 
 public class AssignmentInstruction extends Instruction {
     String leftVar;
     InstructionArgument rightVar;
 
     public AssignmentInstruction(String leftVar, InstructionArgument rightVar) {
+        TranslationContext.addVarToFunction(leftVar);
         this.leftVar = leftVar;
         this.rightVar = rightVar;
     }
@@ -31,7 +33,7 @@ public class AssignmentInstruction extends Instruction {
     }
 
     @Override
-    public void translate(AssemblyTranslator assemblyTranslator, MemoryManagement memoryManagement) {
+    public void translate(AssemblyTranslator assemblyTranslator, MemoryManager memoryManagement) {
         assemblyTranslator.translate(this,memoryManagement);
     }
 }
