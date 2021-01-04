@@ -2,6 +2,7 @@ package quadCode.syntax.instructions;
 
 import assembly.AssemblyTranslator;
 import assembly.memory.MemoryManagement;
+import latte.Absyn.ELitInt;
 import latte.Absyn.Expr;
 
 public class LitInstruction extends Instruction {
@@ -26,6 +27,12 @@ public class LitInstruction extends Instruction {
     @Override
     public void translate(AssemblyTranslator assemblyTranslator, MemoryManagement memoryManagement) {
         assemblyTranslator.translate(this,memoryManagement);
+    }
+
+    public String getLit(){
+        if (litExpr instanceof ELitInt)
+            return String.valueOf(((ELitInt) litExpr).integer_);
+        return  "UNSUPORTED LIT";
     }
 
     @Override

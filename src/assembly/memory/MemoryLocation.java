@@ -1,18 +1,11 @@
 package assembly.memory;
 
-public class MemoryLocation extends Producer {
-    String varName;
-    public void assignVar(String varName){
+import quadCode.syntax.instructions.InstructionArgument;
 
-    }
+import java.util.List;
 
-    public String getVarName() {
-        return varName;
-    }
+public abstract class MemoryLocation extends Producer {
 
-    public void dumpData(){
-    }
-    public boolean isFree(){
-        return varName==null;
-    }
+    public abstract String assemblyCode();
+
 }

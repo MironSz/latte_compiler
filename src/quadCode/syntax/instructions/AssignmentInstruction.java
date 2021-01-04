@@ -5,13 +5,18 @@ import assembly.memory.MemoryManagement;
 
 public class AssignmentInstruction extends Instruction {
     String leftVar;
-    String rightVar;
+    InstructionArgument rightVar;
+
+    public AssignmentInstruction(String leftVar, InstructionArgument rightVar) {
+        this.leftVar = leftVar;
+        this.rightVar = rightVar;
+    }
 
     public String getLeftVar() {
         return leftVar;
     }
 
-    public String getRightVar() {
+    public InstructionArgument getRightVar() {
         return rightVar;
     }
 

@@ -1,14 +1,15 @@
 package quadCode.translator;
 
 import quadCode.syntax.instructions.Instruction;
+import quadCode.syntax.instructions.InstructionArgument;
 
 import java.util.List;
 
 public class ReturnType {
-    private String resultVar;
+    private InstructionArgument resultVar;
 //    List<Instruction> instructions;
 
-    public ReturnType(String resultVar) {
+    public ReturnType(InstructionArgument resultVar) {
         this.resultVar = resultVar;
 //        this.instructions = instructions;
     }
@@ -22,11 +23,11 @@ public class ReturnType {
 //        resultVar = instruction.getResultVar();
 //    }
 
-    public String getResultVar() {
+    public InstructionArgument getResultVar() {
         return resultVar;
     }
 
-    public void setResultVar(String name) {
+    public void setResultVar(InstructionArgument name) {
         resultVar = name;
 //        instructions.get(instructions.size() - 1).setResultVar(name);
     }

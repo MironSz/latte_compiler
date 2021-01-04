@@ -10,14 +10,11 @@ import quadCode.syntax.jumps.SimpleJump;
 public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContext> {
     @Override
     public ReturnType leaf(TranslationContext arg) {
-        return new ReturnType("");
+        return new ReturnType(new VoidArgument());
     }
 
     @Override
     public ReturnType combine(ReturnType x, ReturnType y, TranslationContext arg) {
-//        List<Instruction> result = new LinkedList<>();
-//        y.instructions.forEach(i -> result.add(i));
-//        x.instructions.forEach(i -> result.add(i));
         return y;
     }
 
@@ -41,11 +38,7 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
     }
 
     ReturnType visitLiteralExpression(Expr p, TranslationContext arg) {
-        String varName = arg.getNewResultVar();
-        Instruction instruction = new LitInstruction(varName, p);
-        arg.currentBlock.addInstruction(instruction);
-
-        return new ReturnType(varName);
+        return new ReturnType(new LitArgument(p));
     }
 
     @Override
@@ -58,7 +51,8 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
         arg.openNewBlock(condition);
         jumpToCondition.setNextBlock(arg.currentBlock);
         ReturnType returnType = p.expr_.accept(this, arg);
-        condJump.setCondition(returnType.getResultVar());
+
+        condJump.setCondition(((VarArgument) returnType.getResultVar()).getVarName());
         arg.closeCurrentBlock(condJump);
 
         String body = "Body_" + Block.allBlocks.size();
@@ -74,7 +68,7 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
         condJump.setFalseBlock(arg.currentBlock);
 
 
-        return new ReturnType("");
+        return new ReturnType(new VoidArgument());
     }
 
     @Override
@@ -86,7 +80,7 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
         String resultVar = arg.getNewResultVar();
         Instruction instruction = new CallInstruction(resultVar, p.ident_);
         arg.currentBlock.addInstruction(instruction);
-        return new ReturnType(resultVar);
+        return new ReturnType(new VarArgument(resultVar));
     }
 
     @Override
@@ -94,7 +88,7 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
         ReturnType conditionReturn = p.expr_.accept(this, arg);
 
         CondJump condJump = new CondJump();
-        condJump.setCondition(conditionReturn.getResultVar());
+        condJump.setCondition(((VarArgument) conditionReturn.getResultVar()).getVarName());
         arg.closeCurrentBlock(condJump);
         SimpleJump finalJump = new SimpleJump();
 
@@ -111,7 +105,7 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
         condJump.setFalseBlock(arg.currentBlock);
 
 
-        return new ReturnType("");
+        return new ReturnType(new VoidArgument());
     }
 
     @Override
@@ -119,7 +113,7 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
         ReturnType conditionReturn = p.expr_.accept(this, arg);
 
         CondJump condJump = new CondJump();
-        condJump.setCondition(conditionReturn.getResultVar());
+        condJump.setCondition(((VarArgument) conditionReturn.getResultVar()).getVarName());
         arg.closeCurrentBlock(condJump);
         SimpleJump finalJump = new SimpleJump();
 
@@ -139,7 +133,7 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
         arg.openNewBlock(label3);
         finalJump.setNextBlock(arg.currentBlock);
 
-        return new ReturnType("");
+        return new ReturnType(new VoidArgument());
     }
 
     @Override
@@ -164,23 +158,22 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
 
     @Override
     public ReturnType visit(Ass p, TranslationContext arg) {
-        ReturnType instructions = p.expr_.accept(this, arg);
-        instructions.setResultVar(p.ident_);
-        arg.currentBlock.setResultVar(p.ident_);
-        return instructions;
+        ReturnType result = p.expr_.accept(this, arg);
+        Instruction instruction = new AssignmentInstruction(p.ident_,result.getResultVar());
+        arg.currentBlock.addInstruction(instruction);
+        return result;
     }
 
     @Override
     public ReturnType visit(EVar p, TranslationContext arg) {
-        return new ReturnType(p.ident_);
+        return new ReturnType(new VarArgument(p.ident_));
     }
 
     @Override
     public ReturnType visit(Ret p, TranslationContext arg) {
-        ReturnType calcInstructions = p.expr_.accept(this, arg);
-//        calcInstructions.addInstruction(new ReturnInstruction(calcInstructions.getResultVar()));
-        arg.currentBlock.addInstruction(new ReturnInstruction(calcInstructions.getResultVar()));
-        return calcInstructions;
+        ReturnType result = p.expr_.accept(this, arg);
+        arg.currentBlock.addInstruction(new ReturnInstruction(result.getResultVar()));
+        return new ReturnType(new VoidArgument());
     }
 
     @Override

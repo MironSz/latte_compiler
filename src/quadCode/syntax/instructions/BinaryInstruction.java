@@ -5,12 +5,12 @@ import assembly.memory.MemoryManagement;
 import latte.Absyn.Expr;
 
 public class BinaryInstruction extends Instruction {
-    String leftVar, rightVar;
+    InstructionArgument leftVar, rightVar;
     String resultVar;
     Expr expr; // add,sub,mul, div, mod, or, and ...
 
 
-    public BinaryInstruction(String leftVar, String rightVar, String resultVar, Expr expr) {
+    public BinaryInstruction(InstructionArgument leftVar, InstructionArgument rightVar, String resultVar, Expr expr) {
         this.leftVar = leftVar;
         this.rightVar = rightVar;
         this.resultVar = resultVar;
@@ -37,11 +37,11 @@ public class BinaryInstruction extends Instruction {
         return resultVar+" = "+leftVar+ " "+expr.getClass().toString()+" "+rightVar;
     }
 
-    public String getLeftVar() {
+    public InstructionArgument getLeftVar() {
         return leftVar;
     }
 
-    public String getRightVar() {
+    public InstructionArgument getRightVar() {
         return rightVar;
     }
 

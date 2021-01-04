@@ -4,9 +4,9 @@ import assembly.AssemblyTranslator;
 import assembly.memory.MemoryManagement;
 
 public class ParamInnstruction extends Instruction{
-    String param;
+    InstructionArgument param;
 
-    public ParamInnstruction(String param) {
+    public ParamInnstruction(InstructionArgument param) {
         this.param = param;
     }
 
@@ -28,5 +28,9 @@ public class ParamInnstruction extends Instruction{
     @Override
     public String toString() {
         return "Param "+param;
+    }
+
+    public InstructionArgument getParam() {
+        return param;
     }
 }

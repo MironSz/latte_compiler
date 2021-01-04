@@ -4,9 +4,9 @@ import assembly.AssemblyTranslator;
 import assembly.memory.MemoryManagement;
 
 public class ReturnInstruction extends Instruction {
-    String resultVariable;
+    InstructionArgument resultVariable;
 
-    public ReturnInstruction(String resultVariable) {
+    public ReturnInstruction(InstructionArgument resultVariable) {
         this.resultVariable = resultVariable;
     }
 

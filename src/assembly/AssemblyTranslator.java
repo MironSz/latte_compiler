@@ -3,7 +3,7 @@ package assembly;
 import assembly.memory.MemoryLocation;
 import assembly.memory.MemoryManagement;
 import assembly.memory.Producer;
-import assembly.memory.Register;
+import assembly.memory.locations.Register;
 import frontend.DeclarationContext;
 import latte.Absyn.EAdd;
 import latte.Absyn.Int;
@@ -50,6 +50,13 @@ public class AssemblyTranslator extends Producer {
         return "mov " + from.toString() + "," + to.toString();
     }
 
+    private String movInstruction(String from, String to) {
+        return "mov " + from.toString() + "," + to.toString();
+    }
+
+    private String pushInstruction(MemoryLocation x){
+        return "push "+x.toString();
+    }
     // x+=y
     private String addInstruction(MemoryLocation x, MemoryLocation y, boolean plus) {
         if (plus)
@@ -59,22 +66,29 @@ public class AssemblyTranslator extends Producer {
 
     }
 
-    private String callInstruction(String functionName){
-        return "call "+functionName;
+    private String callInstruction(String functionName) {
+        return "call " + functionName;
     }
+
+    public Register moveArgumentToRegister(InstructionArgument argument, MemoryManagement memoryManagement) {
+        if (argument instanceof VarArgument && memoryManagement.getRegistersForVar(argument).size() > 0) {
+            return memoryManagement.getRegistersForVar(argument).get(0);
+        }
+
+        Register resultRegister = memoryManagement.getFreeRegister();
+        String assemblyInstruction;
+        assemblyInstruction = movInstruction(memoryManagement.getMemoryLocation(argument), resultRegister);
+        emmitAssemblyInstruction(assemblyInstruction);
+        return resultRegister;
+    }
+
 
     public void translate(BinaryInstruction instruction, MemoryManagement memoryManagement) {
         if (DeclarationContext.getType(instruction.getExpr()) instanceof Int) {
             if (instruction.getExpr() instanceof EAdd) {
-                Register resultRegister = memoryManagement.getRegisterContainingVar(instruction.getLeftVar());
+                Register resultRegister = moveArgumentToRegister(instruction.getLeftVar(), memoryManagement);
 
-                if (resultRegister == null) {
-                    resultRegister = memoryManagement.getFreeRegister(instruction.getResultVar());
-                    String assemblyInstruction = movInstruction(memoryManagement.getMemoryLocation(instruction.getLeftVar()), resultRegister);
-                    emmitAssemblyInstruction(assemblyInstruction);
-                } else {
-                    memoryManagement.freeRegister(resultRegister);
-                }
+
                 String addInstruction = addInstruction(resultRegister,
                         memoryManagement.getMemoryLocation(instruction.getRightVar()),
                         ((EAdd) instruction.getExpr()).addop_ instanceof Plus);
@@ -91,7 +105,9 @@ public class AssemblyTranslator extends Producer {
         memoryManagement.removeVarFromRegisters(instruction.getLeftVar());
         List<Register> registers = memoryManagement.getRegistersForVar(instruction.getRightVar());
         if (registers.isEmpty()) {
-//            TODO Move rightVar to some register
+            Register resultRegister = moveArgumentToRegister(instruction.getRightVar(), memoryManagement);
+            resultRegister.addVar(instruction.getLeftVar());
+            registers.add(resultRegister);
         }
         registers.forEach(register -> memoryManagement.addVarToRegister(instruction.getLeftVar(), register));
     }
@@ -99,8 +115,8 @@ public class AssemblyTranslator extends Producer {
     public void translate(CallInstruction instruction, MemoryManagement memoryManagement) {
         memoryManagement.saveState();
         emmitAssemblyInstruction(callInstruction(instruction.getFunction()));
-        if (instruction.getResultVar()!=null && !instruction.getResultVar().equals("")){
-            memoryManagement.addVarToRegister(instruction.getResultVar(),memoryManagement.getSpecificRegister("eax"));
+        if (instruction.getResultVar() != null && !instruction.getResultVar().equals("")) {
+            memoryManagement.addVarToRegister(instruction.getResultVar(), memoryManagement.getSpecificRegister("eax"));
         }
         memoryManagement.restoreState();
     }
@@ -110,12 +126,14 @@ public class AssemblyTranslator extends Producer {
     }
 
     public void translate(ParamInnstruction instruction, MemoryManagement memoryManagement) {
+        String push = pushInstruction(memoryManagement.getMemoryLocation(instruction.getParam()));
+        emmitAssemblyInstruction(push);
     }
 
     public void translate(ReturnInstruction instruction, MemoryManagement memoryManagement) {
         MemoryLocation resultLocation = memoryManagement.getMemoryLocation(instruction.getResultVar());
         Register returnRegister = memoryManagement.getSpecificRegister("eax");
-        String returnAssemblyInstruction  = movInstruction(resultLocation,returnRegister);
+        String returnAssemblyInstruction = movInstruction(resultLocation, returnRegister);
         emmitAssemblyInstruction(returnAssemblyInstruction);
     }
 }
