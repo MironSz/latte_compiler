@@ -4,11 +4,11 @@ import assembly.memory.MemoryLocation;
 
 public class AssemblyInstructions {
     public static String movInstruction(MemoryLocation from, MemoryLocation to) {
-        return "    mov " + from.assemblyCode() + "," + to.assemblyCode();
+        return "    mov " + to.assemblyCode() + "," + from.assemblyCode();
     }
 
     public static String movInstruction(String from, String to) {
-        return "    mov " + from.toString() + "," + to.toString();
+        return "    mov " + to.toString() + "," + from.toString();
     }
 
     public static String pushInstruction(MemoryLocation x) {

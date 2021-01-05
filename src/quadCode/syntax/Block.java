@@ -2,6 +2,7 @@ package quadCode.syntax;
 
 import quadCode.syntax.instructions.Instruction;
 import quadCode.syntax.jumps.BlockJump;
+import quadCode.syntax.jumps.NoJump;
 
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -14,7 +15,7 @@ public class Block {
     String label;
 
     List<Instruction> instructions;
-    BlockJump nextBlock;
+    BlockJump nextBlock = new NoJump();
 
 
     public Block(String label) {

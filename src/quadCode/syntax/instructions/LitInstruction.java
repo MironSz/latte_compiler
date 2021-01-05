@@ -6,12 +6,15 @@ import latte.Absyn.ELitInt;
 import latte.Absyn.Expr;
 import quadCode.translator.TranslationContext;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 public class LitInstruction extends Instruction {
     String varName;
     Expr litExpr;// TODO determine which subclass
 
     public LitInstruction(String varName, Expr litExpr) {
-        TranslationContext.addVarToFunction(varName);
 
         this.varName = varName;
         this.litExpr = litExpr;
@@ -30,6 +33,11 @@ public class LitInstruction extends Instruction {
     @Override
     public void translate(AssemblyTranslator assemblyTranslator, MemoryManager memoryManagement) {
         assemblyTranslator.translate(this,memoryManagement);
+    }
+
+    @Override
+    public List<String> allVarsInInstruction() {
+        return Collections.singletonList(varName);
     }
 
     public String getLit(){

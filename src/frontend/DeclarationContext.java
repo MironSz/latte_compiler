@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 public class DeclarationContext {
     private static HashMap<Object, Type> types = new HashMap<>();
-    private static Map<String, Integer> paramsNumberInFunction = new HashMap<>();
+    private static Map<String, List<String>> paramsInFunction = new HashMap<>();
     private final HashMap<String, Type> nameToType;
     private Type expectedResultType;
     private DeclarationContext parent;
@@ -45,18 +45,26 @@ public class DeclarationContext {
         return types.get(exp);
     }
 
-
+    public static Set<String> allFunctions(){
+        return paramsInFunction.keySet();
+    }
+    public  static List<String> paramsInFunction(String function){
+        return paramsInFunction.getOrDefault(function,new LinkedList<>());
+    }
     public static Integer numberOfParamsInFunction(String function) {
-        return paramsNumberInFunction.getOrDefault(function, 0);
+        return paramsInFunction.getOrDefault(function, new LinkedList<>()).size();
     }
 
-    public  void incrementNumberOfParamsInFunction() {
-        paramsNumberInFunction.put(currentFunction, numberOfParamsInFunction(currentFunction) + 1);
+    public void addParamToFunction(String param){
+        if (!paramsInFunction.containsKey(currentFunction))
+            paramsInFunction.put(currentFunction,new LinkedList<>());
+        paramsInFunction.get(currentFunction).add(param);
     }
+
 
     public static void clearTypesMap() {
         types.clear();
-        paramsNumberInFunction.clear();
+        paramsInFunction.clear();
     }
 
     public void saveType(Object object, Type type) {
@@ -67,6 +75,7 @@ public class DeclarationContext {
         return new Fun(fnDef.type_, fnDef.listarg_.stream().map(arg -> ((ArgCode) arg).type_).collect(Collectors.toCollection(ListType::new)));
     }
     public void setCurrentFunction(String currentFunction) {
+        paramsInFunction.put(currentFunction,new LinkedList<>());
         this.currentFunction = currentFunction;
     }
 

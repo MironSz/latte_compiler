@@ -3,7 +3,11 @@ package quadCode.syntax.instructions;
 import assembly.AssemblyTranslator;
 import assembly.memory.MemoryManager;
 import latte.Absyn.Expr;
-import quadCode.translator.TranslationContext;
+import quadCode.syntax.instructions.arguments.InstructionArgument;
+import quadCode.syntax.instructions.arguments.VarArgument;
+
+import java.util.LinkedList;
+import java.util.List;
 
 public class BinaryInstruction extends Instruction {
     InstructionArgument leftVar, rightVar;
@@ -12,7 +16,6 @@ public class BinaryInstruction extends Instruction {
 
 
     public BinaryInstruction(InstructionArgument leftVar, InstructionArgument rightVar, String resultVar, Expr expr) {
-        TranslationContext.addVarToFunction(resultVar);
 
         this.leftVar = leftVar;
         this.rightVar = rightVar;
@@ -28,6 +31,17 @@ public class BinaryInstruction extends Instruction {
     @Override
     public void translate(AssemblyTranslator assemblyTranslator, MemoryManager memoryManagement) {
         assemblyTranslator.translate(this,memoryManagement);
+    }
+
+    @Override
+    public List<String> allVarsInInstruction() {
+        List<String> result = new LinkedList<>();
+        if(leftVar instanceof VarArgument)
+            result.add(leftVar.assemblyName());
+        if(rightVar instanceof VarArgument)
+            result.add(rightVar.assemblyName());
+        result.add(resultVar);
+        return result;
     }
 
     @Override

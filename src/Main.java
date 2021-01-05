@@ -67,7 +67,7 @@ public class Main {
                                     new Register("r1"),
                                     new Register("r3"),
                                     new Register("r4"))));
-            Producer.instructions.forEach(System.out::println);
+//            Producer.instructions.forEach(System.out::println);
 
         } catch (Throwable e) {
             System.err.println(e.getMessage());

@@ -1,10 +1,8 @@
-package quadCode.syntax.instructions;
-
-import latte.Absyn.ELitInt;
+package quadCode.syntax.instructions.arguments;
 
 import java.util.Objects;
 
-public class VarArgument extends InstructionArgument{
+public class VarArgument extends InstructionArgument {
     String varName;
 
     public String getVarName() {
@@ -28,6 +26,11 @@ public class VarArgument extends InstructionArgument{
         if (o == null || getClass() != o.getClass()) return false;
         VarArgument that = (VarArgument) o;
         return Objects.equals(varName, that.varName);
+    }
+
+    @Override
+    public String toString() {
+        return varName;
     }
 
     @Override

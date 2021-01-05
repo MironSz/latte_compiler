@@ -1,9 +1,9 @@
-package quadCode.syntax.instructions;
+package quadCode.syntax.instructions.arguments;
 
 import latte.Absyn.ELitInt;
 import latte.Absyn.Expr;
 
-public class LitArgument extends InstructionArgument{
+public class LitArgument extends InstructionArgument {
     Expr litExpr;// TODO determine which subclass
 
     public Expr getLitExpr() {

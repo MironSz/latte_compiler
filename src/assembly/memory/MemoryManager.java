@@ -4,9 +4,9 @@ import assembly.memory.locations.LitPseudoLocation;
 import assembly.memory.locations.ParamsOnStackCounter;
 import assembly.memory.locations.Register;
 import assembly.memory.locations.StackLocation;
-import quadCode.syntax.instructions.InstructionArgument;
-import quadCode.syntax.instructions.LitArgument;
-import quadCode.syntax.instructions.VarArgument;
+import quadCode.syntax.instructions.arguments.InstructionArgument;
+import quadCode.syntax.instructions.arguments.LitArgument;
+import quadCode.syntax.instructions.arguments.VarArgument;
 
 import java.util.*;
 
@@ -41,9 +41,11 @@ public class MemoryManager extends Producer {
         this.numberOfParams = numberOfParams;
 
         locationContents = new HashMap<>();
+
         varToRegister = new HashMap<>();
         varToLit = new HashMap<>();
         varToStack = new HashMap<>();
+
         allocatedStackLocations = new HashMap<>();
         paramsOnStackCounter = new ParamsOnStackCounter(0);
 
@@ -61,14 +63,14 @@ public class MemoryManager extends Producer {
 
         for (String var : varsInFunction) {
             int varCount = varsInFunction.indexOf(var);
-            StackLocation stackLocation = new StackLocation(paramsOnStackCounter, varsInFunction.size());
-            varToStack.put(new VarArgument(var), Collections.singletonList(stackLocation));
-            locationContents.put(stackLocation, Collections.singletonList(new VarArgument(var)));
+            StackLocation stackLocation = new StackLocation(paramsOnStackCounter, varsInFunction.size() - varCount);
+            varToStack.put(new VarArgument(var), new LinkedList<>(Collections.singletonList(stackLocation)));
+            locationContents.put(stackLocation, new LinkedList<>(Collections.singletonList(new VarArgument(var))));
             allocatedStackLocations.put(new VarArgument(var), stackLocation);
         }
 
-        for (Register register: allRegisters){
-            locationContents.put(register,new LinkedList<>());
+        for (Register register : allRegisters) {
+            locationContents.put(register, new LinkedList<>());
         }
 
     }
@@ -87,7 +89,7 @@ public class MemoryManager extends Producer {
     }
 
     public MemoryLocation getLocation(InstructionArgument argument) {
-        if(argument instanceof LitArgument)
+        if (argument instanceof LitArgument)
             return new LitPseudoLocation(argument.assemblyName());
         return getLocations(argument).get(0);
 
@@ -111,6 +113,7 @@ public class MemoryManager extends Producer {
         yLocations.forEach(memoryLocation -> addVarToSpecificLocation(memoryLocation, x));
     }
 
+    //    private MemoryLocation findLocationToMove(InstructionArgument argument)
     public void removeVarFromLocation(InstructionArgument argument, MemoryLocation location) {
         if (!locationContents.get(location).contains(argument))
             return;
@@ -121,18 +124,83 @@ public class MemoryManager extends Producer {
         varToStack.get(argument).remove(location);
         varToLit.get(argument).remove(location);
 
-        if (locations.size() == 1 && location.equals(locations.get(0))) {
-            String assemblyInstruction = movInstruction(location, getDefaultStackLocation(argument));
-            emmitAssemblyInstruction(assemblyInstruction);
-            addVarToSpecificLocation(getDefaultStackLocation(argument), argument);
+        locationContents.get(location).remove(argument);
+    }
+
+    public void freeRegister(Register register) {
+        List<InstructionArgument> varsInCell = locationContents.get(register);
+        if (varsInCell.isEmpty()) {
+            return;
         }
+
+        if (getLocations(varsInCell.get(0)).size() > 1) {
+            for (InstructionArgument movedArgument : varsInCell) {
+                varToRegister.get(movedArgument).remove(register);
+                locationContents.get(register).remove(movedArgument);
+            }
+            return;
+        }
+
+        StackLocation locationToMove = null;
+        for (InstructionArgument argumentInCell : varsInCell) {
+            StackLocation correspondingCell = allocatedStackLocations.get(argumentInCell);
+            if (locationContents.get(correspondingCell).isEmpty()) {
+                locationToMove = correspondingCell;
+                break;
+            }
+            locationToMove = correspondingCell;
+        }
+        freeStackLocation(locationToMove);
+        varsInCell = locationContents.get(register);
+
+        for (InstructionArgument movedArgument : varsInCell) {
+            varToRegister.get(movedArgument).remove(register);
+            varToStack.get(movedArgument).add(locationToMove);
+
+            locationContents.get(register).remove(movedArgument);
+            locationContents.get(locationToMove).add(movedArgument);
+        }
+        emmitAssemblyInstruction(movInstruction(register, locationToMove));
+    }
+
+    public void freeStackLocation(StackLocation stackLocation) {
+        List<InstructionArgument> varsInCell = locationContents.get(stackLocation);
+        if (varsInCell.isEmpty()) {
+            return;
+        }
+
+        if (getLocations(varsInCell.get(0)).size() > 1) {
+            for (InstructionArgument movedArgument : varsInCell) {
+                varToStack.get(movedArgument).remove(stackLocation);
+                locationContents.get(stackLocation).remove(movedArgument);
+            }
+            return;
+        }
+
+        StackLocation locationToMove = null;
+        for (InstructionArgument argumentInCell : varsInCell) {
+            StackLocation correspondingCell = allocatedStackLocations.get(argumentInCell);
+            if (locationContents.get(correspondingCell).isEmpty()) {
+                locationToMove = correspondingCell;
+                break;
+            }
+            locationToMove = correspondingCell;
+        }
+        freeStackLocation(locationToMove);
+
+        for (InstructionArgument movedArgument : varsInCell) {
+            varToStack.get(movedArgument).remove(stackLocation);
+            varToStack.get(movedArgument).add(locationToMove);
+
+            locationContents.get(stackLocation).remove(movedArgument);
+            locationContents.get(locationToMove).add(movedArgument);
+        }
+        emmitAssemblyInstruction(movInstruction(stackLocation, locationToMove));
     }
 
     public void removeVarFromOtherLocations(InstructionArgument argument, MemoryLocation memoryLocation) {
-        List<MemoryLocation> locationsToRemove = new LinkedList<>();
-        locationsToRemove.addAll(varToLit.get(argument));
-        locationsToRemove.addAll(varToStack.get(argument));
-        locationsToRemove.addAll(varToRegister.get(argument));
+        List<MemoryLocation> locationsToRemove = getLocations(argument);
+
 
         locationsToRemove.forEach(locationToRemove -> {
             if (!locationToRemove.equals(memoryLocation)) {
@@ -140,9 +208,10 @@ public class MemoryManager extends Producer {
             }
         });
     }
-/*
-    Advanced setter
- */
+
+    /*
+        Advanced setter
+     */
     public void addVarToSpecificLocation(MemoryLocation location, InstructionArgument var) {
         locationContents.get(location).add(var);
 
@@ -161,23 +230,12 @@ public class MemoryManager extends Producer {
         paramsOnStackCounter.incrementParamsOnStack();
     }
 
-    public void freeRegister(Register register, boolean tryToMoveToRegister) {
-        List<InstructionArgument> valuesToRemoveFromResultRegister = new LinkedList<>();
-        valuesToRemoveFromResultRegister.addAll(locationContents.get(register));
-        valuesToRemoveFromResultRegister.forEach(arg -> {
-            removeVarFromLocation(arg, register);
-        });
-    }
 
     public Register getSpecificRegisterWithVar(String registerName, InstructionArgument argument, boolean removeFromOtherRegisters) {
-        Register resultRegister = allRegisters
-                .stream()
-                .filter(register -> register.getRegisterName().equals(registerName))
-                .findFirst()
-                .get();
+        Register resultRegister = getSpecificRegister(registerName);
 
         if (!locationContents.get(resultRegister).contains(argument)) {
-            freeRegister(resultRegister, true);
+            freeRegister(resultRegister);
 
             MemoryLocation locationOfSpecifiedVar = getLocation(argument);
             String assemblyInstruction = movInstruction(locationOfSpecifiedVar, resultRegister);
@@ -201,7 +259,7 @@ public class MemoryManager extends Producer {
             }
         }
         Register register = pickRegisterToFree();
-        freeRegister(register, true);
+        freeRegister(register);
         return register;
     }
 
@@ -227,7 +285,7 @@ public class MemoryManager extends Producer {
 
     public void dumpAllDataToMem() {
         for (Register register : allRegisters) {
-            freeRegister(register, false);
+            freeRegister(register);
         }
     }
 

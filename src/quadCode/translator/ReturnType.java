@@ -1,9 +1,6 @@
 package quadCode.translator;
 
-import quadCode.syntax.instructions.Instruction;
-import quadCode.syntax.instructions.InstructionArgument;
-
-import java.util.List;
+import quadCode.syntax.instructions.arguments.InstructionArgument;
 
 public class ReturnType {
     private InstructionArgument resultVar;

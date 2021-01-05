@@ -51,7 +51,7 @@ public class DeclarationVisitor extends FoldVisitor<Type, DeclarationContext> {
         if (p.type_ instanceof Void) {
             throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num, p.col_num, "Function argument of type \"Void\" is forbidden"));
         }
-        arg.incrementNumberOfParamsInFunction();
+        arg.addParamToFunction(p.ident_);
         arg = arg.declareNewVar(p.ident_, p.type_, p.line_num, p.col_num);
         return super.visit(p, arg);
     }

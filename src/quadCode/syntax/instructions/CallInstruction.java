@@ -5,12 +5,16 @@ import assembly.memory.MemoryManager;
 import latte.Absyn.FnDef;
 import quadCode.translator.TranslationContext;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+
 public class CallInstruction extends Instruction{
     String resultVar;
     String function;
 
     public CallInstruction(String resultVar, String function) {
-        TranslationContext.addVarToFunction(resultVar);
 
         this.resultVar = resultVar;
         this.function = function;
@@ -29,6 +33,13 @@ public class CallInstruction extends Instruction{
     @Override
     public void translate(AssemblyTranslator assemblyTranslator, MemoryManager memoryManagement) {
         assemblyTranslator.translate(this,memoryManagement);
+    }
+
+    @Override
+    public List<String> allVarsInInstruction() {
+        if( resultVar==null || resultVar.equals(""))
+            return new LinkedList<>();
+        return Collections.singletonList(resultVar);
     }
 
     public String getFunction() {

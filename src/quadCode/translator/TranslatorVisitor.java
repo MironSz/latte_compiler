@@ -4,6 +4,9 @@ import latte.Absyn.*;
 import latte.FoldVisitor;
 import quadCode.syntax.Block;
 import quadCode.syntax.instructions.*;
+import quadCode.syntax.instructions.arguments.LitArgument;
+import quadCode.syntax.instructions.arguments.VarArgument;
+import quadCode.syntax.instructions.arguments.VoidArgument;
 import quadCode.syntax.jumps.CondJump;
 import quadCode.syntax.jumps.SimpleJump;
 
@@ -25,7 +28,7 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
         String resultVar = arg.getNewResultVar();
         Instruction instruction = new BinaryInstruction(rLeft.getResultVar(), rRight.getResultVar(), resultVar, expr);
 
-        ReturnType result = combine(rLeft, rRight, arg);
+        ReturnType result = new ReturnType(new VarArgument(resultVar));
         arg.currentBlock.addInstruction(instruction);
 
         return result;
@@ -34,7 +37,6 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
     @Override
     public ReturnType visit(FnDef p, TranslationContext arg) {
         arg.openNewBlock(p.ident_);
-        TranslationContext.setCurrentFunction(p.ident_);
         return super.visit(p, arg);
     }
 
