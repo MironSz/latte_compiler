@@ -49,7 +49,7 @@ public class DeclarationContext {
         return paramsInFunction.keySet();
     }
     public  static List<String> paramsInFunction(String function){
-        return paramsInFunction.getOrDefault(function,new LinkedList<>());
+        return new LinkedList<>(paramsInFunction.getOrDefault(function,new LinkedList<>()));
     }
     public static Integer numberOfParamsInFunction(String function) {
         return paramsInFunction.getOrDefault(function, new LinkedList<>()).size();

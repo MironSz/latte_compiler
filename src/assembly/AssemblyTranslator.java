@@ -18,6 +18,7 @@ import quadCode.syntax.jumps.NoJump;
 import quadCode.syntax.jumps.SimpleJump;
 
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -34,7 +35,7 @@ public class AssemblyTranslator extends Producer {
         block.getNextBlock().allNextBlocks().forEach(block1 -> translateSingleBlock(block1, memoryManager));
     }
 
-    private void allVarsInFunction(Block block, List<String> acc, Set<Block> visited) {
+    private void allVarsInFunction(Block block, List<String> acc, List<String> allLiterals, Set<Block> visited) {
         if (visited.contains(block))
             return;
 
@@ -43,9 +44,13 @@ public class AssemblyTranslator extends Producer {
                 if (!acc.contains(varName))
                     acc.add(varName);
             }
+            if(instruction instanceof LitInstruction){
+                if(!allLiterals.contains(((LitInstruction) instruction).getLit()))
+                    allLiterals.add(((LitInstruction) instruction).getLit());
+            }
         }
         for (Block nextBlock : block.getNextBlock().allNextBlocks())
-            allVarsInFunction(nextBlock, acc, visited);
+            allVarsInFunction(nextBlock, acc,allLiterals, visited);
     }
 
     private void codePrefix() {
@@ -64,10 +69,13 @@ public class AssemblyTranslator extends Producer {
         blocks.forEach(block -> {
             if (DeclarationContext.allFunctions().contains(block.getLabel())) {
                 List<String> varsInFunction = DeclarationContext.paramsInFunction(block.getLabel());
-                allVarsInFunction(block, varsInFunction, new HashSet<>());
+                List<String> allLiterals = new LinkedList<>();
+                allVarsInFunction(block, varsInFunction,allLiterals, new HashSet<>());
+
                 int numberOfParamsInFunction = DeclarationContext.numberOfParamsInFunction(block.getLabel());
 
-                memoryManager.initManagerForFunction(block.getLabel(), varsInFunction, numberOfParamsInFunction);
+                memoryManager.initManagerForFunction(block.getLabel(), varsInFunction, allLiterals,numberOfParamsInFunction);
+
                 translateSingleBlock(block, memoryManager);
             }
         });
@@ -78,6 +86,7 @@ public class AssemblyTranslator extends Producer {
     }
 
     private void translate(BlockJump blockJump, MemoryManager memoryManager) {
+        memoryManager.dumpAllDataToMem();
         if (blockJump instanceof SimpleJump) {
             emmitAssemblyInstruction(jmpInstruction(blockJump.allNextBlocks().get(0).getLabel()));
         } else if (blockJump instanceof NoJump) {
@@ -91,7 +100,7 @@ public class AssemblyTranslator extends Producer {
     public void translate(BinaryInstruction instruction, MemoryManager memoryManager) {
         if (DeclarationContext.getType(instruction.getExpr()) instanceof Int) {
             if (instruction.getExpr() instanceof EAdd) {
-                Register resultRegister = memoryManager.getRegisterContaining(instruction.getLeftVar(), true, false);
+                Register resultRegister = memoryManager.getRegisterContaining(instruction.getLeftVar(),true);
                 MemoryLocation rightVarLocation = memoryManager.getLocation(instruction.getRightVar());
 
                 memoryManager.removeVarFromLocation(instruction.getLeftVar(),resultRegister);
@@ -143,5 +152,12 @@ public class AssemblyTranslator extends Producer {
             memoryManager.getSpecificRegisterWithVar("eax", instruction.getResultVariable(),false);
             emmitAssemblyInstruction("    ret");
         }
+    }
+
+    public void translate(JumpInstruction jumpInstruction, MemoryManager memoryManagement) {
+        public
+    }
+
+    public void translate(LabelInstruction labelInstruction, MemoryManager memoryManagement) {
     }
 }

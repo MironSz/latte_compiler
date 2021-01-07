@@ -1,16 +1,12 @@
 package quadCode.translator;
 
 import quadCode.syntax.Block;
-import quadCode.syntax.instructions.Instruction;
 import quadCode.syntax.jumps.BlockJump;
-
-import java.util.*;
 
 public class TranslationContext {
     static Integer newVarCounter = 0;
-
-    private ReturnType returnType;
     Block currentBlock;
+    private ReturnType returnType;
 
     public void openNewBlock(String name) {
         currentBlock = new Block(name);
@@ -18,13 +14,17 @@ public class TranslationContext {
 
     public void closeCurrentBlock(BlockJump blockJump) {
         currentBlock.setNextBlock(blockJump);
-        currentBlock=null;
+        currentBlock = null;
     }
 
+    public String newLabel(String label) {
+        newVarCounter++;
+        return "#" + label + "_" + newVarCounter;
+    }
 
     public String getNewResultVar() {
         newVarCounter++;
-        return "tmp_var_" + newVarCounter;
+        return "#tmp_var_" + newVarCounter;
     }
 
     public ReturnType getReturnType() {

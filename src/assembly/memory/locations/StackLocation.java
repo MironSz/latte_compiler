@@ -16,7 +16,7 @@ public class StackLocation extends MemoryLocation {
 
     @Override
     public String assemblyCode() {
-        return "[rsp - "+(shiftToStackPointer+paramsOnStackCounter.getParamsOnStack())+"]";
+        return "[rsp + "+(shiftToStackPointer+paramsOnStackCounter.getParamsOnStack())+"]";
     }
 
     @Override

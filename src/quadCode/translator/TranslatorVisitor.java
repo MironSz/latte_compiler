@@ -4,6 +4,7 @@ import latte.Absyn.*;
 import latte.FoldVisitor;
 import quadCode.syntax.Block;
 import quadCode.syntax.instructions.*;
+import quadCode.syntax.instructions.arguments.InstructionArgument;
 import quadCode.syntax.instructions.arguments.LitArgument;
 import quadCode.syntax.instructions.arguments.VarArgument;
 import quadCode.syntax.instructions.arguments.VoidArgument;
@@ -194,14 +195,82 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
         return visitTrinaryExpression(p, p.expr_1, p.expr_2, arg);
     }
 
-    @Override
-    public ReturnType visit(EAnd p, TranslationContext arg) {
-        return visitTrinaryExpression(p, p.expr_1, p.expr_2, arg);
-    }
+//    @Override
+//    public ReturnType visit(EAnd p, TranslationContext arg) {
+//        return visitTrinaryExpression(p, p.expr_1, p.expr_2, arg);
+//    }
+
 
     @Override
     public ReturnType visit(EOr p, TranslationContext arg) {
-        return visitTrinaryExpression(p, p.expr_1, p.expr_2, arg);
+//        return visitTrinaryExpression(p, p.expr_1, p.expr_2, arg);
+
+        String writeTrueLabel = arg.newLabel("WRITE_TRUE");
+        String writeFalseLabel = arg.newLabel("WRITE_FALSE");
+        String finalLabel = arg.newLabel("FINAL");
+
+        String finalArgument = arg.getNewResultVar();
+        Instruction writeTrue = new AssignmentInstruction(finalArgument,new LitArgument(new ELitTrue()));
+        Instruction writeFalse = new AssignmentInstruction(finalArgument,new LitArgument(new ELitFalse()));
+        Instruction finalJumpInstruction = new JumpInstruction(finalLabel);
+
+        ReturnType rLeft = p.expr_1.accept(this, arg);
+        Instruction jumpToTrue  = new JumpInstruction(writeTrueLabel,"je",rLeft.getResultVar()) ;
+        arg.currentBlock.addInstruction(jumpToTrue);
+
+        ReturnType rRight = p.expr_2.accept(this, arg);
+        Instruction jumpToFalse  = new JumpInstruction(writeFalseLabel,"je",rRight.getResultVar()) ;
+        arg.currentBlock.addInstruction(jumpToTrue);
+
+        arg.currentBlock.addInstruction(writeFalse);
+        arg.currentBlock.addInstruction(finalJumpInstruction);
+        arg.currentBlock.addInstruction(new LabelInstruction(writeTrueLabel));
+        arg.currentBlock.addInstruction(writeTrue);
+        arg.currentBlock.addInstruction(new LabelInstruction(finalLabel));
+
+        String resultVar = arg.getNewResultVar();
+        ReturnType result = new ReturnType(new VarArgument(resultVar));
+        return result;
     }
+
+    @Override
+    public ReturnType visit(EAnd p, TranslationContext arg) {
+
+        String writeTrueLabel = arg.newLabel("WRITE_TRUE");
+        String writeFalseLabel = arg.newLabel("WRITE_FALSE");
+        String finalLabel = arg.newLabel("FINAL");
+
+        String finalArgument = arg.getNewResultVar();
+        Instruction writeTrue = new AssignmentInstruction(finalArgument,new LitArgument(new ELitTrue()));
+        Instruction writeFalse = new AssignmentInstruction(finalArgument,new LitArgument(new ELitFalse()));
+        Instruction finalJumpInstruction = new JumpInstruction(finalLabel);
+
+        ReturnType rLeft = p.expr_1.accept(this, arg);
+        Instruction jumpFalse  = new JumpInstruction(writeFalseLabel,"jne",rLeft.getResultVar()) ;
+        arg.currentBlock.addInstruction(jumpFalse);
+
+        ReturnType rRight = p.expr_2.accept(this, arg);
+        Instruction jumpTrue  = new JumpInstruction(writeTrueLabel,"jne",rRight.getResultVar()) ;
+        arg.currentBlock.addInstruction(jumpFalse);
+
+        arg.currentBlock.addInstruction(writeTrue);
+        arg.currentBlock.addInstruction(finalJumpInstruction);
+        arg.currentBlock.addInstruction(new LabelInstruction(writeFalseLabel));
+        arg.currentBlock.addInstruction(writeFalse);
+        arg.currentBlock.addInstruction(new LabelInstruction(finalLabel));
+
+        String resultVar = arg.getNewResultVar();
+        ReturnType result = new ReturnType(new VarArgument(resultVar));
+        return result;
+    }
+
+    @Override
+    public ReturnType visit(Init p, TranslationContext arg) {
+        ReturnType returnType = p.expr_.accept(this,arg);
+        arg.currentBlock.addInstruction(new AssignmentInstruction(p.ident_,returnType.getResultVar()));
+        return returnType;
+    }
+
+
 
 }

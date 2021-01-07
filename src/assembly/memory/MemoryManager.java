@@ -35,7 +35,7 @@ public class MemoryManager extends Producer {
         return allocatedStackLocations.get(instructionArgument);
     }
 
-    public void initManagerForFunction(String functionName, List<String> varsInFunction, int numberOfParams) {
+    public void initManagerForFunction(String functionName, List<String> varsInFunction, List<String> allLiterals, int numberOfParams) {
         this.functionName = functionName;
         this.varsInFunction = varsInFunction;
         this.numberOfParams = numberOfParams;
@@ -58,14 +58,29 @@ public class MemoryManager extends Producer {
 
         for (String var : varsInFunction) {
             varToRegister.put(new VarArgument(var), new LinkedList<>());
-            varToLit.put(new VarArgument(var), new LinkedList<>());
         }
+        for (String literal : allLiterals) {
+            locationContents.put(new LitPseudoLocation(literal), new LinkedList<>());
+        }
+        locationContents.put(new LitPseudoLocation("0"), new LinkedList<>());
 
         for (String var : varsInFunction) {
             int varCount = varsInFunction.indexOf(var);
             StackLocation stackLocation = new StackLocation(paramsOnStackCounter, varsInFunction.size() - varCount);
-            varToStack.put(new VarArgument(var), new LinkedList<>(Collections.singletonList(stackLocation)));
-            locationContents.put(stackLocation, new LinkedList<>(Collections.singletonList(new VarArgument(var))));
+            locationContents.put(stackLocation, new LinkedList<>());
+
+            if (varCount < numberOfParams) {
+                varToStack.put(new VarArgument(var), new LinkedList<>(Collections.singletonList(stackLocation)));
+                varToLit.put(new VarArgument(var), new LinkedList<>());
+
+                locationContents.get(stackLocation).add(new VarArgument(var));
+            } else {
+                varToStack.put(new VarArgument(var), new LinkedList<>());
+                varToLit.put(new VarArgument(var), new LinkedList<>(Collections.singletonList(new LitPseudoLocation("0"))));
+
+                locationContents.get(new LitPseudoLocation("0")).add(new VarArgument(var));
+            }
+
             allocatedStackLocations.put(new VarArgument(var), stackLocation);
         }
 
@@ -80,6 +95,13 @@ public class MemoryManager extends Producer {
     }
 
     public List<MemoryLocation> getLocations(InstructionArgument argument) {
+        if (argument instanceof LitArgument) {
+            LitPseudoLocation location = new LitPseudoLocation(argument.assemblyName());
+            locationContents.put(location, locationContents.getOrDefault(location, new LinkedList<>()));
+            locationContents.get(location).add(argument);
+            varToLit.put(argument, varToLit.getOrDefault(argument, new LinkedList<>()));
+            varToLit.get(argument).add(location);
+        }
         List<MemoryLocation> result = new LinkedList<>();
         result.addAll(varToRegister.getOrDefault(argument, new LinkedList<>()));
         result.addAll(varToStack.getOrDefault(argument, new LinkedList<>()));
@@ -107,18 +129,14 @@ public class MemoryManager extends Producer {
     public void equate(InstructionArgument x, InstructionArgument y) {
         if (x.equals(y))
             return;
-//        x=y;
         List<MemoryLocation> yLocations = getLocations(y);
         removeVarFromOtherLocations(x, null);
         yLocations.forEach(memoryLocation -> addVarToSpecificLocation(memoryLocation, x));
     }
 
-    //    private MemoryLocation findLocationToMove(InstructionArgument argument)
     public void removeVarFromLocation(InstructionArgument argument, MemoryLocation location) {
         if (!locationContents.get(location).contains(argument))
             return;
-
-        List<MemoryLocation> locations = getLocations(argument);
 
         varToRegister.get(argument).remove(location);
         varToStack.get(argument).remove(location);
@@ -132,7 +150,7 @@ public class MemoryManager extends Producer {
         if (varsInCell.isEmpty()) {
             return;
         }
-
+// Jesli te informacje już są w innym miejscu to można je bezrpoblemowo wyrzucić z rejestru
         if (getLocations(varsInCell.get(0)).size() > 1) {
             for (InstructionArgument movedArgument : varsInCell) {
                 varToRegister.get(movedArgument).remove(register);
@@ -142,6 +160,7 @@ public class MemoryManager extends Producer {
         }
 
         StackLocation locationToMove = null;
+
         for (InstructionArgument argumentInCell : varsInCell) {
             StackLocation correspondingCell = allocatedStackLocations.get(argumentInCell);
             if (locationContents.get(correspondingCell).isEmpty()) {
@@ -150,8 +169,11 @@ public class MemoryManager extends Producer {
             }
             locationToMove = correspondingCell;
         }
+        varsInCell = null;
         freeStackLocation(locationToMove);
-        varsInCell = locationContents.get(register);
+        varsInCell = new LinkedList<>(locationContents.get(register));
+
+        emmitAssemblyInstruction(movInstruction(register, locationToMove));
 
         for (InstructionArgument movedArgument : varsInCell) {
             varToRegister.get(movedArgument).remove(register);
@@ -160,7 +182,6 @@ public class MemoryManager extends Producer {
             locationContents.get(register).remove(movedArgument);
             locationContents.get(locationToMove).add(movedArgument);
         }
-        emmitAssemblyInstruction(movInstruction(register, locationToMove));
     }
 
     public void freeStackLocation(StackLocation stackLocation) {
@@ -187,6 +208,7 @@ public class MemoryManager extends Producer {
             locationToMove = correspondingCell;
         }
         freeStackLocation(locationToMove);
+        varsInCell = new LinkedList<>(locationContents.get(stackLocation));
 
         for (InstructionArgument movedArgument : varsInCell) {
             varToStack.get(movedArgument).remove(stackLocation);
@@ -263,7 +285,11 @@ public class MemoryManager extends Producer {
         return register;
     }
 
-    public Register getRegisterContaining(InstructionArgument argument, boolean dumpData, boolean removeFromOtherRegisters) {
+    private boolean isVarAlive(InstructionArgument argument) {
+        return true;
+    }
+
+    public Register getRegisterContaining(InstructionArgument argument, boolean duplicateIfOnlyValue) {
         Register resultRegister;
         if (!varToRegister.get(argument).isEmpty()) {
             resultRegister = varToRegister.get(argument).get(0);
@@ -275,9 +301,10 @@ public class MemoryManager extends Producer {
 
             addVarToSpecificLocation(resultRegister, argument);
         }
-
-        if (removeFromOtherRegisters)
-            removeVarFromOtherLocations(argument, resultRegister);
+        if (duplicateIfOnlyValue)
+            if (isVarAlive(argument))
+                if (getLocations(argument).size() == 1)
+                    freeRegister(resultRegister);
 
         return resultRegister;
 
@@ -287,10 +314,21 @@ public class MemoryManager extends Producer {
         for (Register register : allRegisters) {
             freeRegister(register);
         }
+        for (InstructionArgument argument : allocatedStackLocations.keySet()) {
+            if (!getLocations(argument).contains(getDefaultStackLocation(argument))) {
+                MemoryLocation currentLocation = getLocation(argument);
+                emmitAssemblyInstruction(movInstruction(currentLocation, getDefaultStackLocation(argument)));
+            }
+        }
     }
 
     public void restoreAllData(Integer consumedParams) {
         paramsOnStackCounter.setParamsOnStack(paramsOnStackCounter.getParamsOnStack() - consumedParams);
+        for (InstructionArgument argument : allocatedStackLocations.keySet()) {
+            StackLocation stackLocation = getDefaultStackLocation(argument);
+            addVarToSpecificLocation(stackLocation, argument);
+            removeVarFromOtherLocations(argument, stackLocation);
+        }
     }
 
 
