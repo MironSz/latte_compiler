@@ -1,23 +1,36 @@
 package quadCode.translator;
 
 import quadCode.syntax.Block;
+import quadCode.syntax.instructions.Instruction;
 import quadCode.syntax.jumps.BlockJump;
 
 public class TranslationContext {
     static Integer newVarCounter = 0;
-    Block currentBlock;
+    private Block currentBlock;
     private ReturnType returnType;
 
     public void openNewBlock(String name) {
         currentBlock = new Block(name);
     }
 
+
     public void closeCurrentBlock(BlockJump blockJump) {
         currentBlock.setNextBlock(blockJump);
         currentBlock = null;
     }
 
-    public String newLabel(String label) {
+    public void addInstruction(Instruction instruction){
+        if(currentBlock != null)
+            currentBlock.addInstruction(instruction);
+    }
+    public Block getCurrentBlock(){
+        return currentBlock;
+    }
+    public static String newConstName(){
+        newVarCounter++;
+        return "const_"+newVarCounter;
+    }
+    public static String newLabel(String label) {
         newVarCounter++;
         return "#" + label + "_" + newVarCounter;
     }

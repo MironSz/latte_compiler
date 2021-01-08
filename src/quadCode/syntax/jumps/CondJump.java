@@ -7,12 +7,11 @@ import java.util.List;
 
 public class CondJump extends BlockJump {
     String condition;
-    Block trueBlock,falseBlock;
-//    SimpleJump trueJump, falseJump;
+    Block trueBlock, falseBlock;
 
     @Override
     public List<Block> allNextBlocks() {
-        return Arrays.asList(trueBlock,falseBlock);
+        return Arrays.asList(trueBlock, falseBlock);
     }
 
     public String getCondition() {
@@ -41,6 +40,6 @@ public class CondJump extends BlockJump {
 
     @Override
     public String toString() {
-        return "    if "+condition+" goto "+trueBlock.getLabel()+" else goto "+falseBlock.getLabel();
+        return "    if " + condition + " goto " + trueBlock.getLabel() + " else goto " + falseBlock.getLabel();
     }
 }

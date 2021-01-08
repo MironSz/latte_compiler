@@ -11,6 +11,7 @@ import java.util.Set;
 
 public class Block {
     public static Set<Block> allBlocks = new HashSet<>();
+    public boolean isAlreadyTranslated = false;
     Set<Block> prevBlocks;
     String label;
 

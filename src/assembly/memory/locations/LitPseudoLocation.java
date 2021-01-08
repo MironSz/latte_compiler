@@ -7,8 +7,15 @@ import java.util.Objects;
 public class LitPseudoLocation extends MemoryLocation {
     String lit;
 
+    boolean stringConst = false;
+
     public LitPseudoLocation(String lit) {
         this.lit = lit;
+    }
+
+    public LitPseudoLocation(String lit, boolean stringConst) {
+        this(lit);
+        this.stringConst = stringConst;
     }
 
 

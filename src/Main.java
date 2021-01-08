@@ -43,6 +43,7 @@ public class Main {
                 program = t.parse();
             } catch (Throwable e) {
                 System.err.println("At line " + String.valueOf(t.l.line_num()) + ", near \"" + t.l.buff() + "\" :");
+                return;
             }
             program.accept(new SimplifyLiteralSyntaxVisitor(), null);
             program.accept(new ReturnVisitor(), false);

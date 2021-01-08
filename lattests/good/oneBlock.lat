@@ -1,11 +1,15 @@
 int main() {
-    int x1,x2,x3,x4;
-    x1=1;
+    int x1;
+    int x2;
+    boolean cond = true;
+    x1=3;
+    if(x1<x2){
+        x1=100;
+    } else{
+       x1 = 999;
+    }
     int y;
-    y=x1+x2;
-    y=y+y;
-    y=y+x3;
-    x1=y+x1;
+    y=x1*10;
     return y;
 }
 

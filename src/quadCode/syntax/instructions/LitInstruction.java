@@ -15,7 +15,6 @@ public class LitInstruction extends Instruction {
     Expr litExpr;// TODO determine which subclass
 
     public LitInstruction(String varName, Expr litExpr) {
-
         this.varName = varName;
         this.litExpr = litExpr;
     }
@@ -23,6 +22,10 @@ public class LitInstruction extends Instruction {
     @Override
     public void setResultVar(String resultVar) {
         varName=resultVar;
+    }
+
+    public Expr getLitExpr() {
+        return litExpr;
     }
 
     @Override
