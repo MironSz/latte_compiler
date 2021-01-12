@@ -1,11 +1,25 @@
 package assembly;
 
 import assembly.memory.MemoryLocation;
+import assembly.memory.locations.LitPseudoLocation;
 import assembly.memory.locations.Register;
+import assembly.memory.locations.StackLocation;
 
 public class AssemblyInstructions {
     public static String movInstruction(MemoryLocation from, MemoryLocation to) {
-        return "    mov " + to.assemblyCode() + "," + from.assemblyCode();
+        if (((from instanceof LitPseudoLocation && ((LitPseudoLocation) from).isConstString()) || from instanceof StackLocation)
+                && to instanceof StackLocation) {
+            Register r15 = new Register("r15");
+            String instruction = movInstruction(from, r15);
+            instruction += "\n";
+            instruction += movInstruction(r15, to);
+            return instruction;
+        }
+        if (from instanceof LitPseudoLocation && ((LitPseudoLocation) from).isConstString())
+            return "    lea " + to.assemblyCode() + ", [" + from.assemblyCode() + "]";
+        else
+            return "    mov " + to.assemblyCode() + "," + from.assemblyCode();
+
     }
 
     public static String movInstruction(String from, String to) {
@@ -15,6 +29,11 @@ public class AssemblyInstructions {
     public static String pushInstruction(MemoryLocation x) {
         return "    push " + x.assemblyCode();
     }
+
+    public static String popInstruction(MemoryLocation x) {
+        return "    pop " + x.assemblyCode();
+    }
+
 
     public static String mulInstruction(MemoryLocation x, MemoryLocation y) {
         return "    imul " + x.assemblyCode() + "," + y.assemblyCode();
@@ -30,7 +49,7 @@ public class AssemblyInstructions {
     }
 
     public static String callInstruction(String functionName) {
-        return "    call " + functionName;
+        return "    call _" + functionName;
     }
 
     public static String label(String labelName) {
@@ -38,7 +57,7 @@ public class AssemblyInstructions {
     }
 
     public static String jmpInstruction(String destination) {
-        return "    jmp " + destination;
+        return "    jmp _" + destination;
     }
 
     public static String cmpInstruction(MemoryLocation x, MemoryLocation y) {
@@ -50,7 +69,7 @@ public class AssemblyInstructions {
     }
 
     public static String divInstruction(MemoryLocation memoryLocation) {
-        return "    div " + memoryLocation.assemblyCode();
+        return "    idiv " + memoryLocation.assemblyCode();
     }
 
     public static String constantInstruction(String constant, String name) {

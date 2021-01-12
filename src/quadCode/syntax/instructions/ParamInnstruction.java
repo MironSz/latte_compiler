@@ -4,6 +4,7 @@ import assembly.AssemblyTranslator;
 import assembly.memory.MemoryManager;
 import quadCode.syntax.instructions.arguments.InstructionArgument;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -30,8 +31,13 @@ public class ParamInnstruction extends Instruction{
     }
 
     @Override
-    public List<String> allVarsInInstruction() {
+    public List<String> allVarNamesInInstruction() {
         return new LinkedList<>();
+    }
+
+    @Override
+    public List<InstructionArgument> allArgsInInstruction() {
+        return Collections.singletonList(param);
     }
 
     @Override

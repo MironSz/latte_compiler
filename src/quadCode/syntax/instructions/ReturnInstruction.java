@@ -5,7 +5,6 @@ import assembly.memory.MemoryManager;
 import quadCode.syntax.instructions.arguments.InstructionArgument;
 import quadCode.syntax.instructions.arguments.VarArgument;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,12 +35,18 @@ public class ReturnInstruction extends Instruction {
     public String toString() {
         return "return " + resultVariable;
     }
+
     @Override
-    public List<String> allVarsInInstruction() {
-        if(resultVariable instanceof VarArgument) {
+    public List<String> allVarNamesInInstruction() {
+        if (resultVariable instanceof VarArgument) {
             return Collections.singletonList(resultVariable.assemblyName());
         }
         return new LinkedList<>();
+    }
+
+    @Override
+    public List<InstructionArgument> allArgsInInstruction() {
+        return Collections.singletonList(resultVariable);
     }
 
     public InstructionArgument getResultVariable() {

@@ -15,24 +15,29 @@ public class TranslationContext {
 
 
     public void closeCurrentBlock(BlockJump blockJump) {
-        currentBlock.setNextBlock(blockJump);
-        currentBlock = null;
+        if (currentBlock != null) {
+            currentBlock.setNextBlock(blockJump);
+            currentBlock = null;
+        }
     }
 
-    public void addInstruction(Instruction instruction){
-        if(currentBlock != null)
+    public void addInstruction(Instruction instruction) {
+        if (currentBlock != null)
             currentBlock.addInstruction(instruction);
     }
-    public Block getCurrentBlock(){
+
+    public Block getCurrentBlock() {
         return currentBlock;
     }
-    public static String newConstName(){
+
+    public static String newConstName() {
         newVarCounter++;
-        return "const_"+newVarCounter;
+        return "const_" + newVarCounter;
     }
+
     public static String newLabel(String label) {
         newVarCounter++;
-        return "#" + label + "_" + newVarCounter;
+        return "__" + label + "_" + newVarCounter;
     }
 
     public String getNewResultVar() {

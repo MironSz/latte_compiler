@@ -6,6 +6,7 @@ import latte.Absyn.Expr;
 import quadCode.syntax.instructions.arguments.InstructionArgument;
 import quadCode.syntax.instructions.arguments.VarArgument;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -41,7 +42,7 @@ public class BinaryInstruction extends Instruction {
     }
 
     @Override
-    public List<String> allVarsInInstruction() {
+    public List<String> allVarNamesInInstruction() {
         List<String> result = new LinkedList<>();
         if (leftVar instanceof VarArgument)
             result.add(leftVar.assemblyName());
@@ -49,6 +50,11 @@ public class BinaryInstruction extends Instruction {
             result.add(rightVar.assemblyName());
         result.add(resultVar);
         return result;
+    }
+
+    @Override
+    public List<InstructionArgument> allArgsInInstruction() {
+        return Arrays.asList(leftVar,rightVar);
     }
 
     @Override

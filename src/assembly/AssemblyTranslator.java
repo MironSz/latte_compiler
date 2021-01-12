@@ -3,10 +3,8 @@ package assembly;
 import assembly.memory.MemoryLocation;
 import assembly.memory.MemoryManager;
 import assembly.memory.Producer;
-import assembly.memory.locations.ConstantLocation;
 import assembly.memory.locations.LitPseudoLocation;
 import assembly.memory.locations.Register;
-import assembly.memory.locations.StackLocation;
 import frontend.DeclarationContext;
 import latte.Absyn.*;
 import quadCode.syntax.Block;
@@ -14,7 +12,10 @@ import quadCode.syntax.instructions.*;
 import quadCode.syntax.instructions.arguments.LitArgument;
 import quadCode.syntax.instructions.arguments.VarArgument;
 import quadCode.syntax.instructions.arguments.VoidArgument;
-import quadCode.syntax.jumps.*;
+import quadCode.syntax.jumps.BlockJump;
+import quadCode.syntax.jumps.CondJump;
+import quadCode.syntax.jumps.RetJump;
+import quadCode.syntax.jumps.SimpleJump;
 import quadCode.translator.TranslationContext;
 
 import java.util.*;
@@ -23,7 +24,37 @@ import static assembly.AssemblyInstructions.*;
 
 //Wynik w eaxie
 public class AssemblyTranslator extends Producer {
+    HashMap<String, Integer> numberOfVarsInFunction = new HashMap<String, Integer>();
+    String currentFunction;
 
+    private void translateFunction(Block block, MemoryManager memoryManager) {
+        translateLabel(block.getLabel());
+
+//        Stad się biorą paramsy
+        List<String> varsInFunction = DeclarationContext.paramsInFunction(block.getLabel());
+        int numberOfParams = varsInFunction.size();
+        List<String> allLiterals = new LinkedList<>();
+        currentFunction = block.getLabel();
+
+        allVarsInFunction(block, varsInFunction, allLiterals, new HashSet<>());
+        numberOfVarsInFunction.put(block.getLabel(), varsInFunction.size() - numberOfParams);
+
+
+        int numberOfParamsInFunction = DeclarationContext.numberOfParamsInFunction(block.getLabel());
+
+        memoryManager.initManagerForFunction(block.getLabel(), varsInFunction, allLiterals, numberOfParamsInFunction);
+
+
+        block.isAlreadyTranslated = true;
+        block.getInstructions().forEach(instruction -> instruction.translate(this, memoryManager));
+        translate(block.getNextBlock(), memoryManager);
+        block.getNextBlock().allNextBlocks().forEach(block1 -> {
+            if (!block1.isAlreadyTranslated) {
+                memoryManager.resetManager();
+                translateSingleBlock(block1, memoryManager);
+            }
+        });
+    }
 
     private void translateSingleBlock(Block block, MemoryManager memoryManager) {
         block.isAlreadyTranslated = true;
@@ -38,69 +69,91 @@ public class AssemblyTranslator extends Producer {
         });
     }
 
-    private List<LitArgument> allStringConstantsInCode(List<Block> allBlocks, MemoryManager memoryManager){
-        allBlocks.stream().map(Block::getInstructions).flatMap(Collection::stream).forEach(instruction -> {
-            if(instruction instanceof LitInstruction){
-                if(((LitInstruction) instruction).getLitExpr() instanceof EString){
-                    String name = TranslationContext.newConstName();
-                    String declaration = constantInstruction(((EString) ((LitInstruction) instruction).getLitExpr()).string_,name);
+    private void addAllStringConstantsInCode(List<Block> allBlocks, MemoryManager memoryManager) {
+        allBlocks.stream()
+                .map(Block::getInstructions)
+                .flatMap(Collection::stream)
+                .map(Instruction::allArgsInInstruction)
+                .flatMap(Collection::stream)
+                .forEach(argument -> {
+                    if (argument instanceof LitArgument) {
+                        if (((LitArgument) argument).getLitExpr() instanceof EString) {
+                            String name = TranslationContext.newConstName();
+                            String declaration = constantInstruction(((EString) ((LitArgument) argument).getLitExpr()).string_, name);
+                            ((LitArgument) argument).setConstName(name);
+                            LitPseudoLocation litPseudoLocation = new LitPseudoLocation(name, true);
+                            emmitAssemblyInstruction(declaration);
 
-                    LitPseudoLocation litPseudoLocation = new LitPseudoLocation(name);
-                    emmitAssemblyInstruction(declaration);
-                    memoryManager.addConstant(litPseudoLocation,new LitArgument(((LitInstruction) instruction).getLitExpr()));
-                }
-            }
-        });
-
+                            memoryManager.addConstant(litPseudoLocation, (LitArgument) argument);
+                        }
+                    }
+                });
     }
+
     private void allVarsInFunction(Block block, List<String> acc, List<String> allLiterals, Set<Block> visited) {
         if (visited.contains(block))
             return;
+        visited.add(block);
 
         for (Instruction instruction : block.getInstructions()) {
-            for (String varName : instruction.allVarsInInstruction()) {
+            for (String varName : instruction.allVarNamesInInstruction()) {
                 if (!acc.contains(varName))
                     acc.add(varName);
-            }
-            if (instruction instanceof LitInstruction) {
-                if (!allLiterals.contains(((LitInstruction) instruction).getLit()))
-                    allLiterals.add(((LitInstruction) instruction).getLit());
             }
         }
         for (Block nextBlock : block.getNextBlock().allNextBlocks())
             allVarsInFunction(nextBlock, acc, allLiterals, visited);
     }
 
-    private void codePrefix() {
-        emmitAssemblyInstruction("    global    _start");
-        emmitAssemblyInstruction("    section   .text");
-        emmitAssemblyInstruction("_start:");
-        emmitAssemblyInstruction(callInstruction("main"));
+    private void codePrefix(List<Block> allBlocks, MemoryManager memoryManager) {
+        emmitAssemblyInstruction("global    main");
+        emmitAssemblyInstruction("segment   .data");
+
+        addAllStringConstantsInCode(allBlocks, memoryManager);
+
+        emmitAssemblyInstruction("segment   .text");
+        emmitAssemblyInstruction("extern   _printInt");
+        emmitAssemblyInstruction("extern   _printString");
+        emmitAssemblyInstruction("extern   _readInt");
+        emmitAssemblyInstruction("extern   _readString");
+        emmitAssemblyInstruction("extern   _error");
+        emmitAssemblyInstruction("extern   _addTwoStrings");
+
+        emmitAssemblyInstruction("main:");
+        memoryManager.initManagerForFunction("_main", new LinkedList<>(), new LinkedList<>(), 0);
+        saveAllRegisters(memoryManager);
+
+        new CallInstruction(null, "main").translate(this, memoryManager);
+
         emmitAssemblyInstruction(movInstruction(new Register("eax"), new Register("edi")));
-        emmitAssemblyInstruction(movInstruction(new Register("rax"), new LitPseudoLocation("60")));
+        emmitAssemblyInstruction(movInstruction(new LitPseudoLocation("60"), new Register("rax")));
         emmitAssemblyInstruction("    syscall");
         emmitAssemblyInstruction("");
     }
 
+    public void saveAllRegisters(MemoryManager memoryManager) {
+        for (Register register : memoryManager.getPreservedRegisters())
+            emmitAssemblyInstruction(pushInstruction(register));
+
+    }
+
+    public void restoreAllRegisters(MemoryManager memoryManager) {
+        Collections.reverse(memoryManager.getPreservedRegisters());
+        for (Register register : memoryManager.getPreservedRegisters())
+            emmitAssemblyInstruction(popInstruction(register));
+    }
+
     public void translate(List<Block> blocks, MemoryManager memoryManager) {
-        codePrefix();
+        codePrefix(blocks, memoryManager);
         blocks.forEach(block -> {
             if (DeclarationContext.allFunctions().contains(block.getLabel())) {
-                List<String> varsInFunction = DeclarationContext.paramsInFunction(block.getLabel());
-                List<String> allLiterals = new LinkedList<>();
-                allVarsInFunction(block, varsInFunction, allLiterals, new HashSet<>());
-
-                int numberOfParamsInFunction = DeclarationContext.numberOfParamsInFunction(block.getLabel());
-
-                memoryManager.initManagerForFunction(block.getLabel(), varsInFunction, allLiterals, numberOfParamsInFunction);
-
-                translateSingleBlock(block, memoryManager);
+                translateFunction(block, memoryManager);
             }
         });
     }
 
     private void translateLabel(String label) {
-        emmitAssemblyInstruction(label + ":");
+        emmitAssemblyInstruction("_" + label + ":");
     }
 
     private void translate(BlockJump blockJump, MemoryManager memoryManager) {
@@ -109,79 +162,31 @@ public class AssemblyTranslator extends Producer {
             emmitAssemblyInstruction(jmpInstruction(blockJump.allNextBlocks().get(0).getLabel()));
         } else if (blockJump instanceof RetJump) {
             ((RetJump) blockJump).getReturnInstruction().translate(this, memoryManager);
-        } else if (blockJump instanceof NoJump) {
+
         } else if (blockJump instanceof CondJump) {
-            emmitAssemblyInstruction("    " + ((CondJump) blockJump).getCondition() + " " + ((CondJump) blockJump).getTrueBlock().getLabel());
-            emmitAssemblyInstruction("    jmp" + " " + ((CondJump) blockJump).getFalseBlock().getLabel());
+            emmitAssemblyInstruction("    " + ((CondJump) blockJump).getCondition() + " _" + ((CondJump) blockJump).getTrueBlock().getLabel());
+            emmitAssemblyInstruction("    jmp" + " _" + ((CondJump) blockJump).getFalseBlock().getLabel());
         }
     }
 
 
     public void translate(BinaryInstruction instruction, MemoryManager memoryManager) {
-        if (DeclarationContext.getType(instruction.getExpr()) instanceof Int) {
+        Type operationType = DeclarationContext.getType(instruction.getExpr());
+        if (operationType instanceof Int) {
             if (instruction.getExpr() instanceof EAdd ||
                     (instruction.getExpr() instanceof EMul && ((EMul) instruction.getExpr()).mulop_ instanceof Times)) {
 
-                Register resultRegister = memoryManager.getRegisterContaining(instruction.getLeftVar(), true);
-                MemoryLocation rightVarLocation = memoryManager.getLocation(instruction.getRightVar());
-
-                memoryManager.removeVarFromLocation(instruction.getLeftVar(), resultRegister);
-
-                String assemblyInstruction;
-
-                if (instruction.getExpr() instanceof EAdd)
-                    assemblyInstruction = addInstruction(resultRegister,
-                            rightVarLocation,
-                            ((EAdd) instruction.getExpr()).addop_ instanceof Plus);
-                else
-                    assemblyInstruction = mulInstruction(resultRegister, rightVarLocation);
-
-                emmitAssemblyInstruction(assemblyInstruction);
-                memoryManager.removeVarFromOtherLocations(new VarArgument(instruction.getResultVar()), resultRegister);
-                memoryManager.addVarToSpecificLocation(resultRegister, new VarArgument(instruction.getResultVar()));
-                return;
+                BinaryInstructionTranslator.translateIntAddTimes(instruction, memoryManager, this);
+            } else if (instruction.getExpr() instanceof EMul) {
+                BinaryInstructionTranslator.translateDiv(instruction, memoryManager, this);
             }
-        } else if (instruction.getExpr() instanceof EMul) {
-            Register rax = memoryManager.getSpecificRegisterWithVar("rax",instruction.getLeftVar(),false);
-            memoryManager.lockRegister(rax);
-            Register rdx = memoryManager.getSpecificRegister("rdx");
-            memoryManager.lockRegister(rdx);
-            memoryManager.freeRegister(rdx);
-
-            emmitAssemblyInstruction(resetRegister(rdx));
-
-            MemoryLocation leftVarLocation = memoryManager.getLocation(instruction.getRightVar());
-
-            emmitAssemblyInstruction(divInstruction(leftVarLocation));
-
-            if (((EMul) instruction.getExpr()).mulop_ instanceof Div ){
-                memoryManager.addVarToSpecificLocation(rax, new VarArgument(instruction.getResultVar()));
-            } else{
-                memoryManager.addVarToSpecificLocation(rdx, new VarArgument(instruction.getResultVar()));
+        } else if (DeclarationContext.getType(instruction.getExpr()) instanceof Str) {
+            if (instruction.getExpr() instanceof EAdd) {
+                BinaryInstructionTranslator.translateAddStr(instruction, memoryManager, this);
             }
-            memoryManager.unlockRegister(rdx);
-            memoryManager.unlockRegister(rax);
-            return;
         } else if (instruction.getExpr() instanceof ERel) {
             if (instruction.intCompare) {
-                String writeTrueLabel = TranslationContext.newLabel("WriteTrue");
-                String finalLabel = TranslationContext.newLabel("FinalLabel");
-                String condition = translate(((ERel) instruction.getExpr()).relop_);
-
-                StackLocation resultLocation = memoryManager.getDefaultStackLocation(instruction.getResultVar());
-                Register leftRegister = memoryManager.getRegisterContaining(instruction.getLeftVar(), true);
-                MemoryLocation rightVarLocation = memoryManager.getLocation(instruction.getRightVar());
-
-                emmitAssemblyInstruction(cmpInstruction(leftRegister, rightVarLocation));
-                emmitAssemblyInstruction("    " + condition + " " + writeTrueLabel);
-                emmitAssemblyInstruction(movInstruction("0", resultLocation.assemblyCode()));
-                emmitAssemblyInstruction("    jmp " + finalLabel);
-                emmitAssemblyInstruction(writeTrueLabel);
-                emmitAssemblyInstruction(movInstruction("1", resultLocation.assemblyCode()));
-                emmitAssemblyInstruction(finalLabel);
-
-                memoryManager.addVarToSpecificLocation(resultLocation, new VarArgument(instruction.getResultVar()));
-                memoryManager.removeVarFromOtherLocations(new VarArgument(instruction.getResultVar()), resultLocation);
+                BinaryInstructionTranslator.translateIntCmp(instruction, memoryManager, this);
             }
         }
     }
@@ -195,19 +200,23 @@ public class AssemblyTranslator extends Producer {
     public void translate(CallInstruction instruction, MemoryManager memoryManager) {
         memoryManager.dumpAllDataToMem();
         emmitAssemblyInstruction(callInstruction(instruction.getFunction()));
-        if (instruction.getResultVar() != null && !instruction.getResultVar().equals("")) {
+
+        if (instruction.getResultVar() != null && !instruction.getResultVar().equals("")){
+            memoryManager.removeVarFromOtherLocations(new VarArgument((instruction.getResultVar())),null);
             memoryManager.addVarToSpecificLocation(
                     memoryManager.getSpecificRegister("rax"),
                     new VarArgument(instruction.getResultVar())
             );
         }
+
+
         memoryManager.restoreAllData(DeclarationContext.numberOfParamsInFunction(instruction.getFunction()));
+        Register rax = memoryManager.getSpecificRegister("rax");
+        memoryManager.addVarToSpecificLocation(rax, new VarArgument(instruction.getResultVar()));
+        memoryManager.removeVarFromOtherLocations(new VarArgument(instruction.getResultVar()),rax);
+
     }
 
-    public void translate(LitInstruction instruction, MemoryManager memoryManager) {
-        MemoryLocation location = new LitPseudoLocation(instruction.getLit());
-        memoryManager.addVarToSpecificLocation(location, new VarArgument(instruction.getResultVar()));
-    }
 
     public void translate(ParamInnstruction instruction, MemoryManager memoryManager) {
         String push = pushInstruction(memoryManager.getLocation(instruction.getParam()));
@@ -216,12 +225,17 @@ public class AssemblyTranslator extends Producer {
     }
 
     public void translate(ReturnInstruction instruction, MemoryManager memoryManager) {
-        if (instruction.getResultVariable() instanceof VoidArgument) {
-            emmitAssemblyInstruction("    ret");
-        } else {
-            memoryManager.getSpecificRegisterWithVar("eax", instruction.getResultVariable(), false);
-            emmitAssemblyInstruction("    ret");
-        }
+        int numberOfVarsToRemove = numberOfVarsInFunction.get(currentFunction);
+
+        if (!(instruction.getResultVariable() instanceof VoidArgument))
+            memoryManager.getSpecificRegisterWithVar("rax", instruction.getResultVariable(), false);
+
+        emmitAssemblyInstruction(addInstruction(
+                new Register("rsp"),
+                new LitPseudoLocation(String.valueOf(numberOfVarsToRemove * 8)),
+                true));
+
+        emmitAssemblyInstruction("    ret");
     }
 
 

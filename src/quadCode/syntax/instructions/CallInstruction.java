@@ -3,6 +3,7 @@ package quadCode.syntax.instructions;
 import assembly.AssemblyTranslator;
 import assembly.memory.MemoryManager;
 import latte.Absyn.FnDef;
+import quadCode.syntax.instructions.arguments.InstructionArgument;
 import quadCode.translator.TranslationContext;
 
 import java.util.Arrays;
@@ -36,10 +37,15 @@ public class CallInstruction extends Instruction{
     }
 
     @Override
-    public List<String> allVarsInInstruction() {
+    public List<String> allVarNamesInInstruction() {
         if( resultVar==null || resultVar.equals(""))
             return new LinkedList<>();
         return Collections.singletonList(resultVar);
+    }
+
+    @Override
+    public List<InstructionArgument> allArgsInInstruction() {
+        return new LinkedList<>();
     }
 
     public String getFunction() {

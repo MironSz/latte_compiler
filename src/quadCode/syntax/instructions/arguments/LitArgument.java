@@ -1,12 +1,11 @@
 package quadCode.syntax.instructions.arguments;
 
-import latte.Absyn.ELitFalse;
-import latte.Absyn.ELitInt;
-import latte.Absyn.ELitTrue;
-import latte.Absyn.Expr;
+import latte.Absyn.*;
 
 public class LitArgument extends InstructionArgument {
     Expr litExpr;// TODO determine which subclass
+
+    String constName;
 
     public Expr getLitExpr() {
         return litExpr;
@@ -17,6 +16,14 @@ public class LitArgument extends InstructionArgument {
     }
 
 
+    public String getConstName() {
+        return constName;
+    }
+
+    public void setConstName(String constName) {
+        this.constName = constName;
+    }
+
     @Override
     public String assemblyName() {
         if (litExpr instanceof ELitInt)
@@ -25,6 +32,8 @@ public class LitArgument extends InstructionArgument {
             return "1";
         if (litExpr instanceof ELitFalse)
             return "0";
+        if(litExpr instanceof EString)
+            return constName;
         return super.toString();
     }
 

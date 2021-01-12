@@ -1,5 +1,6 @@
 package quadCode.translator;
 
+import frontend.DeclarationContext;
 import latte.Absyn.*;
 import latte.FoldVisitor;
 import quadCode.syntax.Block;
@@ -51,21 +52,22 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
         CondJump condJump = new CondJump();
         arg.closeCurrentBlock(jumpToCondition);
 
-        String condition = "Condition_" + Block.allBlocks.size();
+        String condition = "WhileCondition_" + Block.allBlocks.size();
         arg.openNewBlock(condition);
         jumpToCondition.setNextBlock(arg.getCurrentBlock());
         ReturnType returnType = p.expr_.accept(this, arg);
-
-        condJump.setCondition(((VarArgument) returnType.getResultVar()).getVarName());
+        CompareInstruction compareInstruction = new CompareInstruction(returnType.getResultVar(),new LitArgument(new ELitTrue()));
+        arg.addInstruction(compareInstruction);
+        condJump.setCondition("je");
         arg.closeCurrentBlock(condJump);
 
-        String body = "Body_" + Block.allBlocks.size();
+        String body = "WhileBody_" + Block.allBlocks.size();
         arg.openNewBlock(body);
         condJump.setTrueBlock(arg.getCurrentBlock());
         p.stmt_.accept(this, arg);
         arg.closeCurrentBlock(jumpToCondition);
 
-        String finalBlock = "FinalBlock_" + Block.allBlocks.size();
+        String finalBlock = "WhileFinalBlock_" + Block.allBlocks.size();
         arg.openNewBlock(finalBlock);
 
 
@@ -155,14 +157,14 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
         arg.closeCurrentBlock(condJump);
         SimpleJump finalJump = new SimpleJump();
 
-        String label1 = "TrueBlock_" + Block.allBlocks.size();
+        String label1 = "IfTrueBlock_" + Block.allBlocks.size();
         arg.openNewBlock(label1);
         condJump.setTrueBlock(arg.getCurrentBlock());
         p.stmt_.accept(this, arg);
         arg.closeCurrentBlock(finalJump);
 
 
-        String label3 = "FinalBlock_" + Block.allBlocks.size();
+        String label3 = "IfFinalBlock_" + Block.allBlocks.size();
         arg.openNewBlock(label3);
         finalJump.setNextBlock(arg.getCurrentBlock());
         condJump.setFalseBlock(arg.getCurrentBlock());
@@ -181,20 +183,20 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
         arg.closeCurrentBlock(condJump);
         SimpleJump finalJump = new SimpleJump();
 
-        String trueLabel = "TrueBlock_" + Block.allBlocks.size();
+        String trueLabel = "IfElseTrueBlock_" + Block.allBlocks.size();
         arg.openNewBlock(trueLabel);
         condJump.setTrueBlock(arg.getCurrentBlock());
         p.stmt_1.accept(this, arg);
         arg.closeCurrentBlock(finalJump);
 
 
-        String falseLabel = "FalseBlock_" + Block.allBlocks.size();
+        String falseLabel = "IfElseFalseBlock_" + Block.allBlocks.size();
         arg.openNewBlock(falseLabel);
         condJump.setFalseBlock(arg.getCurrentBlock());
         p.stmt_2.accept(this, arg);
         arg.closeCurrentBlock(finalJump);
 
-        String finalLabel = "FinalBlock_" + Block.allBlocks.size();
+        String finalLabel = "IfElseFinalBlock_" + Block.allBlocks.size();
         arg.openNewBlock(finalLabel);
         finalJump.setNextBlock(arg.getCurrentBlock());
 

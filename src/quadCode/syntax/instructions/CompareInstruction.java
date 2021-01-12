@@ -5,6 +5,7 @@ import assembly.memory.MemoryManager;
 import quadCode.syntax.instructions.arguments.InstructionArgument;
 import quadCode.syntax.instructions.arguments.VarArgument;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -48,7 +49,7 @@ public class CompareInstruction extends Instruction {
     }
 
     @Override
-    public List<String> allVarsInInstruction() {
+    public List<String> allVarNamesInInstruction() {
         List<String> result = new LinkedList<>();
         if (left instanceof VarArgument) {
             result.add(((VarArgument) left).getVarName());
@@ -58,4 +59,10 @@ public class CompareInstruction extends Instruction {
         }
         return result;
     }
+
+    @Override
+    public List<InstructionArgument> allArgsInInstruction() {
+        return Arrays.asList(left,right);
+    }
+
 }

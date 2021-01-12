@@ -1,8 +1,10 @@
 package quadCode.syntax;
 
 import quadCode.syntax.instructions.Instruction;
+import quadCode.syntax.instructions.ReturnInstruction;
+import quadCode.syntax.instructions.arguments.VoidArgument;
 import quadCode.syntax.jumps.BlockJump;
-import quadCode.syntax.jumps.NoJump;
+import quadCode.syntax.jumps.RetJump;
 
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -16,7 +18,7 @@ public class Block {
     String label;
 
     List<Instruction> instructions;
-    BlockJump nextBlock = new NoJump();
+    BlockJump nextBlock = new RetJump(new ReturnInstruction(new VoidArgument()));
 
 
     public Block(String label) {
@@ -51,8 +53,8 @@ public class Block {
         this.instructions.add(instruction);
     }
 
-    public void setResultVar(String name){
-        instructions.get(instructions.size()-1).setResultVar(name);
+    public void setResultVar(String name) {
+        instructions.get(instructions.size() - 1).setResultVar(name);
     }
 
     public String getLabel() {

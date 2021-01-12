@@ -5,14 +5,10 @@ import assembly.memory.locations.Register;
 import frontend.*;
 import latte.Yylex;
 import quadCode.syntax.Block;
-import quadCode.translator.TranslatorVisitor;
-import quadCode.translator.ReturnType;
 import quadCode.translator.TranslationContext;
+import quadCode.translator.TranslatorVisitor;
 
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
 import java.util.Arrays;
 import java.util.LinkedList;
 
@@ -36,8 +32,10 @@ public class Main {
 
     public static void main(String args[]) throws Exception {
         Main t = new Main(args);
-        latte.Absyn.Program program = null;
-        ReturnType returnType;
+        String pathToLatteProgram = args[0];
+        String pathToTarget = "./target/";
+        String pathToOutput = pathToLatteProgram.replace(".lat", ".s");
+        latte.Absyn.Program program;
         try {
             try {
                 program = t.parse();
@@ -50,25 +48,79 @@ public class Main {
             program.accept(new DeclarationVisitor(), new DeclarationContext());
 
             DeclarationContext.clearTypesMap();
-            program.accept(new RemoveDuplicatesVisitor(),new RemoveDuplicatesContext());
+            program.accept(new RemoveDuplicatesVisitor(), new RemoveDuplicatesContext());
             program.accept(new RemoveBinaryOperationsVisitor(), null);
             program.accept(new DeclarationVisitor(), new DeclarationContext());
 
-            returnType = program.accept(new TranslatorVisitor(), new TranslationContext());
-            for(Block block: Block.allBlocks){
-                System.out.println(block.toString()+"\n\n");
-            }
+            program.accept(new TranslatorVisitor(), new TranslationContext());
+//            for (Block block : Block.allBlocks) {
+//                System.out.println(block.toString() + "\n\n");
+//            }
 
             AssemblyTranslator assemblyTranslator = new AssemblyTranslator();
-            assemblyTranslator.translate(new LinkedList<>(Block.allBlocks),
-                    new MemoryManager(
-                            Arrays.asList(
-                                    new Register("eax"),
+            MemoryManager memoryManager = new MemoryManager(
+                    Arrays.asList(
+                            new Register("rax"),
+                            new Register("rbx"),
+                            new Register("rcx"),
+                            new Register("rdx"),
+                            new Register("rsi"),
+                            new Register("r8"),
+                            new Register("r9"),
+                            new Register("r10"),
+                            new Register("r11"),
+                            new Register("r12"),
+                            new Register("r13"),
+                            new Register("r14")
 //                                    new Register("r2"),
-                                    new Register("r1"),
-                                    new Register("r3"),
-                                    new Register("r4"))));
-//            Producer.instructions.forEach(System.out::println);
+//                                    new Register("r1"),
+//                                    new Register("r3"),
+//                                    new Register("r4")
+                    ));
+
+            memoryManager.setPreservedRegisters(Arrays.asList(new Register("rbx"),
+                    new Register("rsp"),
+                    new Register("rbp"),
+                    new Register("r11"),
+                    new Register("r12"),
+                    new Register("r13"),
+                    new Register("r14")));
+            assemblyTranslator.translate(new LinkedList<>(Block.allBlocks), memoryManager);
+
+            File assemblyFile = new File(pathToOutput);
+            FileWriter fileWriter = new FileWriter(pathToOutput);
+            Producer.instructions.forEach(instruction -> {
+                try {
+                    fileWriter.write(instruction);
+                    fileWriter.write("\n");
+                } catch (Throwable e) {
+                    System.err.println(e.getMessage());
+                    e.printStackTrace();
+                    System.exit(1);
+                }
+            });
+            fileWriter.close();
+
+
+            assemblyFile = new File(pathToTarget + "code.s");
+            FileWriter fileWriter2 = new FileWriter(pathToOutput);
+            Producer.instructions.forEach(instruction -> {
+                try {
+                    fileWriter2.write(instruction);
+                    fileWriter2.write("\n");
+                } catch (Throwable e) {
+                    System.err.println(e.getMessage());
+                    e.printStackTrace();
+                    System.exit(1);
+                }
+            });
+            fileWriter2.close();
+
+            Runtime rt = Runtime.getRuntime();
+
+            rt.exec("cd ./target && make");
+            rt.exec("cp ./target/out "+pathToOutput);
+
 
         } catch (Throwable e) {
             System.err.println(e.getMessage());

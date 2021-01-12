@@ -16,7 +16,7 @@ public class StackLocation extends MemoryLocation {
 
     @Override
     public String assemblyCode() {
-        return "[rsp + " + (shiftToStackPointer + paramsOnStackCounter.getParamsOnStack() - 1) * 8 + "]";
+        return "QWORD [rsp + " + (shiftToStackPointer + paramsOnStackCounter.getParamsOnStack()) * 8 + "]";
     }
 
     @Override

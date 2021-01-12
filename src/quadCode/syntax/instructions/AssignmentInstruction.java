@@ -42,9 +42,14 @@ public class AssignmentInstruction extends Instruction {
     }
 
     @Override
-    public List<String> allVarsInInstruction() {
+    public List<String> allVarNamesInInstruction() {
         if(rightVar instanceof VarArgument)
             return Arrays.asList(leftVar,rightVar.assemblyName());
         return Collections.singletonList(leftVar);
+    }
+
+    @Override
+    public List<InstructionArgument> allArgsInInstruction() {
+        return Collections.singletonList(rightVar);
     }
 }

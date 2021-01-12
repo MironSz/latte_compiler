@@ -15,6 +15,8 @@ import static assembly.AssemblyInstructions.movInstruction;
 
 public class MemoryManager extends Producer {
     List<Register> allRegisters;
+    List<Register> preservedRegisters;
+
     Map<String, LitPseudoLocation> constantLocations = new HashMap<>();
 
     Map<InstructionArgument, StackLocation> allocatedStackLocations;
@@ -30,6 +32,18 @@ public class MemoryManager extends Producer {
     List<String> varsInFunction;
     String functionName;
     int numberOfParams;
+
+    public List<Register> getPreservedRegisters() {
+        return preservedRegisters;
+    }
+
+    public void setPreservedRegisters(List<Register> preservedRegisters) {
+        this.preservedRegisters = preservedRegisters;
+    }
+
+    public List<Register> getAllRegisters() {
+        return allRegisters;
+    }
 
     public MemoryManager(List<Register> allRegisters) {
         this.allRegisters = allRegisters;
@@ -60,8 +74,8 @@ public class MemoryManager extends Producer {
         paramsOnStackCounter = new ParamsOnStackCounter(0);
 
         String incStackAssemblyInstruction = addInstruction(
-                new Register("esp"),
-                new LitPseudoLocation(String.valueOf(varsInFunction.size() - numberOfParams)),
+                new Register("rsp"),
+                new LitPseudoLocation(String.valueOf((varsInFunction.size() - numberOfParams) * 8)),
                 false);
 
         emmitAssemblyInstruction(incStackAssemblyInstruction);
@@ -69,6 +83,7 @@ public class MemoryManager extends Producer {
         for (String var : varsInFunction) {
             varToRegister.put(new VarArgument(var), new LinkedList<>());
         }
+        locationContents.put(new LitPseudoLocation("0"), new LinkedList<>());
 
         for (String literal : allLiterals) {
             LitPseudoLocation litPseudoLocation = constantLocations.getOrDefault(literal, new LitPseudoLocation(literal));
@@ -77,7 +92,12 @@ public class MemoryManager extends Producer {
 
         for (String var : varsInFunction) {
             int varCount = varsInFunction.indexOf(var);
-            StackLocation stackLocation = new StackLocation(paramsOnStackCounter, varsInFunction.size() - varCount);
+            StackLocation stackLocation;
+
+            if (varCount < numberOfParams)
+                stackLocation = new StackLocation(paramsOnStackCounter, varsInFunction.size() - varCount);
+            else
+                stackLocation = new StackLocation(paramsOnStackCounter, varsInFunction.size() - varCount-1);
             locationContents.put(stackLocation, new LinkedList<>());
 
             if (varCount < numberOfParams) {
@@ -157,7 +177,7 @@ public class MemoryManager extends Producer {
     }
 
     public void freeRegister(Register register) {
-        List<InstructionArgument> varsInCell = locationContents.get(register);
+        List<InstructionArgument> varsInCell = new LinkedList<>(locationContents.get(register));
         if (varsInCell.isEmpty()) {
             return;
         }
@@ -180,7 +200,6 @@ public class MemoryManager extends Producer {
             }
             locationToMove = correspondingCell;
         }
-        varsInCell = null;
         freeStackLocation(locationToMove);
         varsInCell = new LinkedList<>(locationContents.get(register));
 
@@ -311,7 +330,7 @@ public class MemoryManager extends Producer {
 
     public Register getFreeRegister() {
         for (Register register : allRegisters) {
-            if (locationContents.get(register).isEmpty()) {
+            if (locationContents.get(register).isEmpty() && !lockedRegisters.contains(register)) {
                 return register;
             }
         }
@@ -359,6 +378,7 @@ public class MemoryManager extends Producer {
 
     public void restoreAllData(Integer consumedParams) {
         paramsOnStackCounter.setParamsOnStack(paramsOnStackCounter.getParamsOnStack() - consumedParams);
+        emmitAssemblyInstruction(addInstruction(new Register("rsp"), new LitPseudoLocation(String.valueOf(consumedParams * 8)), true));
         resetManager();
     }
 
@@ -377,6 +397,6 @@ public class MemoryManager extends Producer {
 
 
     public void addConstant(LitPseudoLocation constantLocation, LitArgument litArgument) {
-        constantLocations.put()
+//        constantLocations.put()
     }
 }

@@ -25,6 +25,9 @@ public class DeclarationContext {
         ListType printIntTypes = new ListType();
         printIntTypes.add(new Int());
 
+        paramsInFunction.put("printString", Collections.singletonList("s"));
+        paramsInFunction.put("printInt", Collections.singletonList("i"));
+        paramsInFunction.put("addTwoStrings", Arrays.asList("s1","s2"));
 
         nameToType.put("printString", new Fun(new Void(), printStringTypes));
         nameToType.put("printInt", new Fun(new Void(), printIntTypes));

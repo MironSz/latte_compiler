@@ -2,12 +2,14 @@ package assembly.memory.locations;
 
 import assembly.memory.MemoryLocation;
 
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 public class LitPseudoLocation extends MemoryLocation {
+    private static Set<String> stringSet = new HashSet<>();
     String lit;
 
-    boolean stringConst = false;
 
     public LitPseudoLocation(String lit) {
         this.lit = lit;
@@ -15,9 +17,14 @@ public class LitPseudoLocation extends MemoryLocation {
 
     public LitPseudoLocation(String lit, boolean stringConst) {
         this(lit);
-        this.stringConst = stringConst;
+        if (stringConst)
+            stringSet.add(lit);
     }
 
+
+    public boolean isConstString() {
+        return stringSet.contains(lit);
+    }
 
     @Override
     public String assemblyCode() {
