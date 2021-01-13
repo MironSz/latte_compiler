@@ -103,7 +103,7 @@ public class Main {
 
 
             assemblyFile = new File(pathToTarget + "code.s");
-            FileWriter fileWriter2 = new FileWriter(pathToOutput);
+            FileWriter fileWriter2 = new FileWriter(pathToTarget + "code.s");
             Producer.instructions.forEach(instruction -> {
                 try {
                     fileWriter2.write(instruction);
