@@ -60,7 +60,7 @@ public class BinaryInstructionTranslator {
         VarArgument resultArgument = new VarArgument(instruction.getResultVar());
         Register rax = memoryManager.getSpecificRegisterWithVar("rax", instruction.getLeftVar(), false);
         memoryManager.lockRegister(rax);
-        Register rdx = memoryManager.getSpecificRegisterWithVar("rdx", new LitArgument(new ELitInt(0)),false);
+        Register rdx = memoryManager.getSpecificRegister("rdx");
         memoryManager.lockRegister(rdx);
         memoryManager.freeRegister(rdx);
 
@@ -84,7 +84,9 @@ public class BinaryInstructionTranslator {
     }
 
     static public void translateIntAddTimes(BinaryInstruction instruction, MemoryManager memoryManager, AssemblyTranslator assemblyTranslator) {
-
+        if(instruction.getResultVar().contains("43")){
+            System.out.println("42");
+        }
         Register resultRegister = memoryManager.getRegisterContaining(instruction.getLeftVar(), true);
         MemoryLocation rightVarLocation = memoryManager.getLocation(instruction.getRightVar());
 

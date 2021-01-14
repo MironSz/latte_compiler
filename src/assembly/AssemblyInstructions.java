@@ -69,7 +69,7 @@ public class AssemblyInstructions {
     }
 
     public static String divInstruction(MemoryLocation memoryLocation) {
-        return "    idiv " + memoryLocation.assemblyCode();
+        return "    cqo\n    idiv " + memoryLocation.assemblyCode();
     }
 
     public static String constantInstruction(String constant, String name) {

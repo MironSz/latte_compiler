@@ -70,7 +70,7 @@ public class DeclarationContext {
         paramsInFunction.clear();
     }
 
-    public void saveType(Object object, Type type) {
+    public static void saveType(Object object, Type type) {
         types.put(object, type);
     }
 

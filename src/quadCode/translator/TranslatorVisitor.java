@@ -28,7 +28,7 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
         ReturnType rRight = rExpr.accept(this, arg);
 
         String resultVar = arg.getNewResultVar();
-        Instruction instruction = new BinaryInstruction(rLeft.getResultVar(), rRight.getResultVar(), resultVar, expr,intCompare,false);
+        Instruction instruction = new BinaryInstruction(rLeft.getResultVar(), rRight.getResultVar(), resultVar, expr, intCompare, false);
 
         ReturnType result = new ReturnType(new VarArgument(resultVar));
         arg.addInstruction(instruction);
@@ -56,7 +56,7 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
         arg.openNewBlock(condition);
         jumpToCondition.setNextBlock(arg.getCurrentBlock());
         ReturnType returnType = p.expr_.accept(this, arg);
-        CompareInstruction compareInstruction = new CompareInstruction(returnType.getResultVar(),new LitArgument(new ELitTrue()));
+        CompareInstruction compareInstruction = new CompareInstruction(returnType.getResultVar(), new LitArgument(new ELitTrue()));
         arg.addInstruction(compareInstruction);
         condJump.setCondition("je");
         arg.closeCurrentBlock(condJump);
@@ -133,17 +133,17 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
 
     @Override
     public ReturnType visit(EMul p, TranslationContext arg) {
-        return visitTrinaryExpression(p, p.expr_1, p.expr_2, arg,false);
+        return visitTrinaryExpression(p, p.expr_1, p.expr_2, arg, false);
     }
 
     @Override
     public ReturnType visit(EAdd p, TranslationContext arg) {
-        return visitTrinaryExpression(p, p.expr_1, p.expr_2, arg,false);
+        return visitTrinaryExpression(p, p.expr_1, p.expr_2, arg, false);
     }
 
     @Override
     public ReturnType visit(ERel p, TranslationContext arg) {
-        return visitTrinaryExpression(p, p.expr_1, p.expr_2, arg,true);
+        return visitTrinaryExpression(p, p.expr_1, p.expr_2, arg, true);
     }
 
 
@@ -261,5 +261,16 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
         return returnType;
     }
 
+    @Override
+    public ReturnType visit(Decr p, TranslationContext arg) {
+        Expr sub = new EAdd(new EVar(p.ident_), new Minus(), new ELitInt(1));
+        DeclarationContext.saveType(sub, new Int());
+        return new Ass(p.ident_, sub).accept(this, arg);    }
 
+    @Override
+    public ReturnType visit(Incr p, TranslationContext arg) {
+        Expr add = new EAdd(new EVar(p.ident_), new Plus(), new ELitInt(1));
+        DeclarationContext.saveType(add, new Int());
+        return new Ass(p.ident_, add).accept(this, arg);
+    }
 }

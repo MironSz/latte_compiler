@@ -11,6 +11,7 @@ import quadCode.translator.TranslatorVisitor;
 import java.io.*;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 
 
 public class Main {
@@ -88,6 +89,8 @@ public class Main {
             assemblyTranslator.translate(new LinkedList<>(Block.allBlocks), memoryManager);
 
             File assemblyFile = new File(pathToOutput);
+            assemblyFile.delete();
+
             FileWriter fileWriter = new FileWriter(pathToOutput);
             Producer.instructions.forEach(instruction -> {
                 try {
@@ -103,6 +106,7 @@ public class Main {
 
 
             assemblyFile = new File(pathToTarget + "code.s");
+//            assemblyFile.delete();
             FileWriter fileWriter2 = new FileWriter(pathToTarget + "code.s");
             Producer.instructions.forEach(instruction -> {
                 try {
@@ -116,10 +120,12 @@ public class Main {
             });
             fileWriter2.close();
 
-            Runtime rt = Runtime.getRuntime();
 
-            rt.exec("cd ./target && make");
-            rt.exec("cp ./target/out "+pathToOutput);
+            ProcessBuilder processBuilder = new ProcessBuilder();
+            Runtime rt = Runtime.getRuntime();
+//            new File(pathToTarget).de
+            new ProcessBuilder("make").directory(new File(pathToTarget)).start();
+            new ProcessBuilder("cp" , "./target/out", pathToOutput).start();
 
 
         } catch (Throwable e) {
@@ -130,7 +136,9 @@ public class Main {
 
 
     }
+    private void generateCodeAndExecutable(List<String> code, String pathToLatFile){
 
+    }
     public latte.Absyn.Program parse() throws Exception {
         latte.Absyn.Program ast = p.pProgram();
         return ast;

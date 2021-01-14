@@ -105,6 +105,9 @@ public class SimplifyLiteralSyntaxVisitor extends FoldVisitor<Expr, Object> {
         return null;
     }
 
+
+
+
     @Override
     public Expr visit(EOr p, Object arg) {
         Expr p1 = p.expr_1.accept(this, arg);
@@ -140,7 +143,7 @@ public class SimplifyLiteralSyntaxVisitor extends FoldVisitor<Expr, Object> {
                 if (p.expr_1.equals(p.expr_2)) {
                     return new ELitTrue();
                 } else {
-                    return new ELitFalse();
+                    return p;
                 }
             } else if (p.expr_1 instanceof ELitInt && p.expr_2 instanceof ELitInt) {
                 if (checkOp(((ELitInt) p.expr_1).integer_, ((ELitInt) p.expr_2).integer_, p.relop_)) {
@@ -185,8 +188,7 @@ public class SimplifyLiteralSyntaxVisitor extends FoldVisitor<Expr, Object> {
         Expr expr = p.expr_.accept(this, arg);
         if (expr instanceof ELitInt)
             return new ELitInt(((ELitInt) p.expr_).integer_ * (-1));
-
-        return p;
+        return new ERel(expr,new EQU(),new ELitFalse());
     }
 
     @Override
