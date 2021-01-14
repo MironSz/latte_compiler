@@ -104,6 +104,7 @@ public class Main {
             });
             fileWriter.close();
 
+            new ProcessBuilder("make clean").directory(new File(pathToTarget)).start();
 
             assemblyFile = new File(pathToTarget + "code.s");
 //            assemblyFile.delete();

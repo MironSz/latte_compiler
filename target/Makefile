@@ -11,6 +11,7 @@ code.o:
 clean:
 	rm *.o
 	rm out
+	rm code.s
 
 
 
