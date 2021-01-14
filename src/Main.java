@@ -123,11 +123,12 @@ public class Main {
             fileWriter2.close();
 
 
-            ProcessBuilder processBuilder = new ProcessBuilder();
             Runtime rt = Runtime.getRuntime();
-//            new File(pathToTarget).de
             new ProcessBuilder("make").directory(new File(pathToTarget)).start();
-            new ProcessBuilder("cp", "./target/out", pathToOutputExe).start();
+            Thread.sleep(1000);
+            rt.exec("cp ./target/out "+pathToOutputExe);
+//            new File("./target/out").renameTo(new File(pathToOutputExe));
+//            new ProcessBuilder("cp", "./target/out", pathToOutputExe).start();
 
 
         } catch (Throwable e) {

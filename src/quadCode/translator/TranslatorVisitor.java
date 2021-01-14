@@ -119,7 +119,6 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
     }
 
 
-
     @Override
     public ReturnType visit(EVar p, TranslationContext arg) {
         return new ReturnType(new VarArgument(p.ident_));
@@ -253,7 +252,45 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
 
     @Override
     public ReturnType visit(EAnd p, TranslationContext arg) {
-        throw new RuntimeException("unimplemented shit");
+        String writeTrueLabel = arg.newLabel("WRITE_TRUE");
+        String writeFalseLabel = arg.newLabel("WRITE_FALSE");
+
+        String finalLabel = arg.newLabel("FINAL");
+        String rightExpression = arg.newLabel("RIGHT_EXPR");
+        String resultVar = arg.getNewResultVar();
+
+        CondJump falseOrRight = new CondJump();
+        CondJump trueOrFalse = new CondJump();
+        SimpleJump jumpToFinal = new SimpleJump();
+        falseOrRight.setCondition("je");
+        trueOrFalse.setCondition("je");
+
+        ReturnType rLeft = p.expr_1.accept(this, arg);
+        arg.addInstruction(new CompareInstruction(rLeft.getResultVar(), new LitArgument(new ELitFalse())));
+        arg.closeCurrentBlock(falseOrRight);
+
+        arg.openNewBlock(rightExpression);
+        falseOrRight.setFalseBlock(arg.getCurrentBlock());
+        ReturnType rRight = p.expr_2.accept(this, arg);
+        arg.addInstruction(new CompareInstruction(rRight.getResultVar(), new LitArgument(new ELitFalse())));
+        arg.closeCurrentBlock(trueOrFalse);
+
+        arg.openNewBlock(writeTrueLabel);
+        trueOrFalse.setTrueBlock(arg.getCurrentBlock());
+        arg.addInstruction(new AssignmentInstruction(resultVar, new LitArgument(new ELitTrue())));
+        arg.closeCurrentBlock(jumpToFinal);
+
+        arg.openNewBlock(writeFalseLabel);
+        falseOrRight.setTrueBlock(arg.getCurrentBlock());
+        trueOrFalse.setTrueBlock(arg.getCurrentBlock());
+        arg.addInstruction(new AssignmentInstruction(resultVar, new LitArgument(new ELitFalse())));
+        arg.closeCurrentBlock(jumpToFinal);
+
+        arg.openNewBlock(finalLabel);
+        jumpToFinal.setNextBlock(arg.getCurrentBlock());
+
+        ReturnType result = new ReturnType(new VarArgument(resultVar));
+        return result;
     }
 
     @Override
@@ -267,7 +304,8 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
     public ReturnType visit(Decr p, TranslationContext arg) {
         Expr sub = new EAdd(new EVar(p.ident_), new Minus(), new ELitInt(1));
         DeclarationContext.saveType(sub, new Int());
-        return new Ass(p.ident_, sub).accept(this, arg);    }
+        return new Ass(p.ident_, sub).accept(this, arg);
+    }
 
     @Override
     public ReturnType visit(Incr p, TranslationContext arg) {
@@ -281,6 +319,6 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
         Expr neg = new EAdd(new ELitInt(0), new Minus(), p.expr_);
         DeclarationContext.saveType(neg, new Int());
 
-        return neg.accept(this,arg);
+        return neg.accept(this, arg);
     }
 }

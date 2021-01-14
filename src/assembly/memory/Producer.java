@@ -7,6 +7,6 @@ public class Producer {
     public static List<String> instructions = new LinkedList<>();
     public void emmitAssemblyInstruction(String instruction){
         instructions.add(instruction);
-        System.out.println(instruction);
+//        System.out.println(instruction);
     }
 }
