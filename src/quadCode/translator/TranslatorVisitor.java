@@ -118,6 +118,8 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
         return result;
     }
 
+
+
     @Override
     public ReturnType visit(EVar p, TranslationContext arg) {
         return new ReturnType(new VarArgument(p.ident_));
@@ -272,5 +274,13 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
         Expr add = new EAdd(new EVar(p.ident_), new Plus(), new ELitInt(1));
         DeclarationContext.saveType(add, new Int());
         return new Ass(p.ident_, add).accept(this, arg);
+    }
+
+    @Override
+    public ReturnType visit(Neg p, TranslationContext arg) {
+        Expr neg = new EAdd(new ELitInt(0), new Minus(), p.expr_);
+        DeclarationContext.saveType(neg, new Int());
+
+        return neg.accept(this,arg);
     }
 }

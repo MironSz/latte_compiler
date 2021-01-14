@@ -169,9 +169,9 @@ public class MemoryManager extends Producer {
         if (!locationContents.get(location).contains(argument))
             return;
 
-        varToRegister.get(argument).remove(location);
-        varToStack.get(argument).remove(location);
-        varToLit.get(argument).remove(location);
+        varToRegister.getOrDefault(argument, new LinkedList<>()).remove(location);
+        varToStack.getOrDefault(argument, new LinkedList<>()).remove(location);
+        varToLit.getOrDefault(argument, new LinkedList<>()).remove(location);
 
         locationContents.get(location).remove(argument);
     }

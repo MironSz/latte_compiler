@@ -36,6 +36,7 @@ public class Main {
         String pathToLatteProgram = args[0];
         String pathToTarget = "./target/";
         String pathToOutput = pathToLatteProgram.replace(".lat", ".s");
+        String pathToOutputExe = pathToLatteProgram.replace(".lat", "");
         latte.Absyn.Program program;
         try {
             try {
@@ -104,7 +105,7 @@ public class Main {
             });
             fileWriter.close();
 
-            new ProcessBuilder("make clean").directory(new File(pathToTarget)).start();
+            new ProcessBuilder("make", "clean").directory(new File(pathToTarget)).start();
 
             assemblyFile = new File(pathToTarget + "code.s");
 //            assemblyFile.delete();
@@ -126,7 +127,7 @@ public class Main {
             Runtime rt = Runtime.getRuntime();
 //            new File(pathToTarget).de
             new ProcessBuilder("make").directory(new File(pathToTarget)).start();
-            new ProcessBuilder("cp" , "./target/out", pathToOutput).start();
+            new ProcessBuilder("cp", "./target/out", pathToOutputExe).start();
 
 
         } catch (Throwable e) {
@@ -137,9 +138,11 @@ public class Main {
 
 
     }
-    private void generateCodeAndExecutable(List<String> code, String pathToLatFile){
+
+    private void generateCodeAndExecutable(List<String> code, String pathToLatFile) {
 
     }
+
     public latte.Absyn.Program parse() throws Exception {
         latte.Absyn.Program ast = p.pProgram();
         return ast;
