@@ -25,7 +25,7 @@ extern  void c_print_str(void * s){
 extern  void * c_read_str(){
     void * buffor_ptr = NULL;
     LL length=0;
-    length=getline((char **) &buffor_ptr, &length, stdin);
+    length=getline( &buffor_ptr, &length, stdin);
     length--;
 
     void * result_ptr = malloc(sizeof(LL )+sizeof(char)*(length+1));

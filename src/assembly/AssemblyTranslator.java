@@ -124,11 +124,13 @@ public class AssemblyTranslator extends Producer {
         saveAllRegisters(memoryManager);
 
         new CallInstruction(null, "main").translate(this, memoryManager);
+        restoreAllRegisters(memoryManager);
+        emmitAssemblyInstruction("    ret");
 
-        emmitAssemblyInstruction(movInstruction(new Register("eax"), new Register("edi")));
-        emmitAssemblyInstruction(movInstruction(new LitPseudoLocation("60"), new Register("rax")));
-        emmitAssemblyInstruction("    syscall");
-        emmitAssemblyInstruction("");
+//        emmitAssemblyInstruction(movInstruction(new Register("eax"), new Register("edi")));
+//        emmitAssemblyInstruction(movInstruction(new LitPseudoLocation("60"), new Register("rax")));
+//        emmitAssemblyInstruction("    syscall");
+//        emmitAssemblyInstruction("");
     }
 
     public void saveAllRegisters(MemoryManager memoryManager) {
