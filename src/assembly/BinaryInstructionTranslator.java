@@ -84,9 +84,6 @@ public class BinaryInstructionTranslator {
     }
 
     static public void translateIntAddTimes(BinaryInstruction instruction, MemoryManager memoryManager, AssemblyTranslator assemblyTranslator) {
-        if(instruction.getResultVar().contains("43")){
-            System.out.println("42");
-        }
         Register resultRegister = memoryManager.getRegisterContaining(instruction.getLeftVar(), true);
         MemoryLocation rightVarLocation = memoryManager.getLocation(instruction.getRightVar());
 

@@ -4,11 +4,12 @@
 
 #define LL long long
 
+
 extern void c_exit(LL a){
     exit((int) a);
 }
 extern  void c_print_int(LL a){
-    printf("%lld\n" , a);
+    printf("%d\n" , (int)a);
 }
 
 
@@ -19,13 +20,16 @@ extern  LL c_read_int() {
 }
 
 extern  void c_print_str(void * s){
-    printf("%s" , (char *) (s+sizeof(LL )));
+    LL length = * (LL *) (s);
+    ((char *)(s+sizeof(LL)))[*((LL *) s)]='\n';
+
+    printf("%.*s\n" , *((LL *) s), (char *) (s+sizeof(LL )));
 }
 
 extern  void * c_read_str(){
     void * buffor_ptr = NULL;
     LL length=0;
-    length=getline((char **) &buffor_ptr, &length, stdin);
+    length=getline( &buffor_ptr, &length, stdin);
     length--;
 
     void * result_ptr = malloc(sizeof(LL )+sizeof(char)*(length+1));

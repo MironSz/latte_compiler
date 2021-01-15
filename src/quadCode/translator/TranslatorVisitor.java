@@ -237,7 +237,7 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
         arg.closeCurrentBlock(jumpToFinal);
 
         arg.openNewBlock(writeFalseLabel);
-        trueOrRight.setFalseBlock(arg.getCurrentBlock());
+//        trueOrRight.setFalseBlock(arg.getCurrentBlock());
         trueOrFalse.setFalseBlock(arg.getCurrentBlock());
         arg.addInstruction(new AssignmentInstruction(resultVar, new LitArgument(new ELitFalse())));
         arg.closeCurrentBlock(jumpToFinal);
