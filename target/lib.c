@@ -41,7 +41,7 @@ extern  void * c_read_str(){
     return result_ptr;
 }
 
-extern  void *  c_add_two_strings(void * s2, void * s1){
+extern  void *  c_add_two_strings(void * s1, void * s2){
     LL length1  = *( LL *) s1;
     LL length2  = *( LL *) s2;
     LL result_length = length1+length2;
