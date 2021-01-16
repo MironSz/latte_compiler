@@ -164,6 +164,8 @@ public class SimplifyLiteralSyntaxVisitor extends FoldVisitor<Expr, Object> {
             return a >= b;
         if (op instanceof GTH)
             return a > b;
+        if (op instanceof NE)
+            return a!=b;
         return a == b;
     }
 
@@ -188,7 +190,7 @@ public class SimplifyLiteralSyntaxVisitor extends FoldVisitor<Expr, Object> {
         Expr expr = p.expr_.accept(this, arg);
         if (expr instanceof ELitInt)
             return new ELitInt(((ELitInt) p.expr_).integer_ * (-1));
-        return new ERel(expr,new EQU(),new ELitFalse());
+        return p;
     }
 
     @Override

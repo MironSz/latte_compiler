@@ -127,10 +127,6 @@ public class AssemblyTranslator extends Producer {
         restoreAllRegisters(memoryManager);
         emmitAssemblyInstruction("    ret");
 
-//        emmitAssemblyInstruction(movInstruction(new Register("eax"), new Register("edi")));
-//        emmitAssemblyInstruction(movInstruction(new LitPseudoLocation("60"), new Register("rax")));
-//        emmitAssemblyInstruction("    syscall");
-//        emmitAssemblyInstruction("");
     }
 
     public void saveAllRegisters(MemoryManager memoryManager) {
@@ -187,9 +183,7 @@ public class AssemblyTranslator extends Producer {
                 BinaryInstructionTranslator.translateAddStr(instruction, memoryManager, this);
             }
         } else if (instruction.getExpr() instanceof ERel) {
-            if (instruction.intCompare) {
                 BinaryInstructionTranslator.translateIntCmp(instruction, memoryManager, this);
-            }
         }
     }
 
