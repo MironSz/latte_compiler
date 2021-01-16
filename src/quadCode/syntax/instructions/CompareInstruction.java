@@ -4,6 +4,7 @@ import assembly.AssemblyTranslator;
 import assembly.memory.MemoryManager;
 import quadCode.syntax.instructions.arguments.InstructionArgument;
 import quadCode.syntax.instructions.arguments.VarArgument;
+import quadCode.syntax.instructions.arguments.VoidArgument;
 
 import java.util.Arrays;
 import java.util.LinkedList;
