@@ -55,9 +55,6 @@ public class Main {
             program.accept(new DeclarationVisitor(), new DeclarationContext());
 
             program.accept(new TranslatorVisitor(), new TranslationContext());
-//            for (Block block : Block.allBlocks) {
-//                System.out.println(block.toString() + "\n\n");
-//            }
 
             AssemblyTranslator assemblyTranslator = new AssemblyTranslator();
             MemoryManager memoryManager = new MemoryManager(
@@ -104,11 +101,13 @@ public class Main {
                 }
             });
             fileWriter.close();
+            Thread.sleep(100);
 
             new ProcessBuilder("make", "clean").directory(new File(pathToTarget)).start();
+            Thread.sleep(100);
 
             assemblyFile = new File(pathToTarget + "code.s");
-//            assemblyFile.delete();
+
             FileWriter fileWriter2 = new FileWriter(pathToTarget + "code.s");
             Producer.instructions.forEach(instruction -> {
                 try {
@@ -125,10 +124,10 @@ public class Main {
 
             Runtime rt = Runtime.getRuntime();
             new ProcessBuilder("make").directory(new File(pathToTarget)).start();
-            Thread.sleep(1000);
+            Thread.sleep(100);
             rt.exec("cp ./target/out "+pathToOutputExe);
-//            new File("./target/out").renameTo(new File(pathToOutputExe));
-//            new ProcessBuilder("cp", "./target/out", pathToOutputExe).start();
+            Thread.sleep(100);
+
 
 
         } catch (Throwable e) {
@@ -140,9 +139,6 @@ public class Main {
 
     }
 
-    private void generateCodeAndExecutable(List<String> code, String pathToLatFile) {
-
-    }
 
     public latte.Absyn.Program parse() throws Exception {
         latte.Absyn.Program ast = p.pProgram();
