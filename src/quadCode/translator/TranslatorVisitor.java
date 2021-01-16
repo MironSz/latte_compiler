@@ -208,7 +208,7 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
     @Override
     public ReturnType visit(Not p, TranslationContext arg) {
         Expr not = new ERel(p.expr_, new EQU(), new ELitFalse());
-        DeclarationContext.saveType(not, new Int());
+        DeclarationContext.saveType(not, new Bool());
 
         return not.accept(this, arg);
     }
