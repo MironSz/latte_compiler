@@ -15,7 +15,7 @@ extern  void c_print_int(LL a){
 
 extern  LL c_read_int() {
     LL a;
-    scanf("%lld" , &a);
+    scanf("%lld\n" , &a);
     return a;
 }
 

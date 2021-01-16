@@ -3,24 +3,35 @@
 #include <string.h>
 
 #define LL long long
-void c_print_int(LL a){
-    printf("%lld\n" , a);
+
+
+extern void c_exit(LL a){
+    exit((int) a);
+}
+extern  void c_print_int(LL a){
+    printf("%d\n" , (int)a);
 }
 
 
-LL c_read_int() {
+extern  LL c_read_int() {
     LL a;
-    scanf("%lld" , &a);
+    scanf("%lld\n" , &a);
     return a;
 }
 
-void c_print_str(void * s){
-    printf("%s\n" , (char *) (s+sizeof(LL )));
+extern  void c_print_str(void * s){
+    LL length = * (LL *) (s);
+    ((char *)(s+sizeof(LL)))[*((LL *) s)]='\n';
+
+    printf("%.*s\n" , *((LL *) s), (char *) (s+sizeof(LL )));
 }
 
-void * c_read_str(){
+extern  void * c_read_str(){
     void * buffor_ptr = NULL;
-    LL length = getline((char **) &buffor_ptr, NULL, stdin);
+    LL length=0;
+    length=getline( &buffor_ptr, &length, stdin);
+    length--;
+
     void * result_ptr = malloc(sizeof(LL )+sizeof(char)*(length+1));
     *((LL *) result_ptr) = length;
 
@@ -30,7 +41,7 @@ void * c_read_str(){
     return result_ptr;
 }
 
-void *  c_add_two_strings(void * s1, void * s2){
+extern  void *  c_add_two_strings(void * s2, void * s1){
     LL length1  = *( LL *) s1;
     LL length2  = *( LL *) s2;
     LL result_length = length1+length2;
@@ -39,8 +50,8 @@ void *  c_add_two_strings(void * s1, void * s2){
 
     *((LL *) result_ptr) = result_length;
 
-    memcpy(result_ptr+sizeof(LL ), s1, length1);
-    memcpy(result_ptr+sizeof(LL )+(length1)*sizeof(char), s2, length2+1);
+    memcpy(result_ptr+sizeof(LL ), s1+sizeof(LL), length1);
 
+    memcpy(result_ptr+sizeof(LL )+(length1)*sizeof(char), s2+sizeof(LL), length2+1);
     return result_ptr;
 }
