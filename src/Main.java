@@ -1,4 +1,6 @@
 import assembly.AssemblyTranslator;
+import assembly.Optimizations.LivenessOptimization;
+import assembly.QuadCode;
 import assembly.memory.MemoryManager;
 import assembly.memory.Producer;
 import assembly.memory.locations.Register;
@@ -11,7 +13,6 @@ import quadCode.translator.TranslatorVisitor;
 import java.io.*;
 import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.List;
 
 
 public class Main {
@@ -55,8 +56,8 @@ public class Main {
             program.accept(new DeclarationVisitor(), new DeclarationContext());
 
             program.accept(new TranslatorVisitor(), new TranslationContext());
+            QuadCode rawQuadCode = new QuadCode(new LinkedList<>(Block.allBlocks), DeclarationContext.getTypes(), DeclarationContext.getParamsInFunction(), new Integer(1000000));
 
-            AssemblyTranslator assemblyTranslator = new AssemblyTranslator();
             MemoryManager memoryManager = new MemoryManager(
                     Arrays.asList(
                             new Register("rax"),
@@ -75,7 +76,7 @@ public class Main {
 //                                    new Register("r1"),
 //                                    new Register("r3"),
 //                                    new Register("r4")
-                    ));
+                    ), rawQuadCode);
 
             memoryManager.setPreservedRegisters(Arrays.asList(new Register("rbx"),
                     new Register("rsp"),
@@ -84,7 +85,11 @@ public class Main {
                     new Register("r12"),
                     new Register("r13"),
                     new Register("r14")));
-            assemblyTranslator.translate(new LinkedList<>(Block.allBlocks), memoryManager);
+
+            new LivenessOptimization().optimize(rawQuadCode);
+            AssemblyTranslator assemblyTranslator = new AssemblyTranslator(rawQuadCode);
+
+            assemblyTranslator.translate(memoryManager);
 
             File assemblyFile = new File(pathToOutput);
             assemblyFile.delete();
@@ -125,9 +130,8 @@ public class Main {
             Runtime rt = Runtime.getRuntime();
             new ProcessBuilder("make").directory(new File(pathToTarget)).start();
             Thread.sleep(100);
-            rt.exec("cp ./target/out "+pathToOutputExe);
+            rt.exec("cp ./target/out " + pathToOutputExe);
             Thread.sleep(100);
-
 
 
         } catch (Throwable e) {

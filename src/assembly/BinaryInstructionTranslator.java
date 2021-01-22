@@ -21,8 +21,8 @@ public class BinaryInstructionTranslator {
         String condition = assemblyTranslator.translate(((ERel) instruction.getExpr()).relop_);
 
         StackLocation resultLocation = memoryManager.getDefaultStackLocation(instruction.getResultVar());
-        Register leftRegister = memoryManager.getRegisterContaining(instruction.getLeftVar(), true);
-        MemoryLocation rightVarLocation = memoryManager.getLocation(instruction.getRightVar());
+        Register leftRegister = memoryManager.getRegisterContaining(instruction.getLeftVar(), true,instruction);
+        MemoryLocation rightVarLocation = memoryManager.getLocation(instruction.getRightVar(),instruction);
 
         assemblyTranslator.emmitAssemblyInstruction(cmpInstruction(leftRegister, rightVarLocation));
         assemblyTranslator.emmitAssemblyInstruction("    " + condition + " " + writeTrueLabel);
@@ -37,9 +37,9 @@ public class BinaryInstructionTranslator {
     }
 
     static public void translateAddStr(BinaryInstruction instruction, MemoryManager memoryManager, AssemblyTranslator assemblyTranslator) {
-        MemoryLocation leftLocation = memoryManager.getLocation(instruction.getLeftVar());
-        MemoryLocation rightLocation = memoryManager.getLocation(instruction.getRightVar());
-        memoryManager.dumpAllDataToMem();
+        MemoryLocation leftLocation = memoryManager.getLocation(instruction.getLeftVar(),instruction);
+        MemoryLocation rightLocation = memoryManager.getLocation(instruction.getRightVar(),instruction);
+        memoryManager.dumpAllDataToMem(instruction);
 
         assemblyTranslator.emmitAssemblyInstruction(pushInstruction(leftLocation));
         memoryManager.incrementParamsOnStackCounter();
@@ -58,17 +58,17 @@ public class BinaryInstructionTranslator {
 
     static public void translateDiv(BinaryInstruction instruction, MemoryManager memoryManager, AssemblyTranslator assemblyTranslator) {
         VarArgument resultArgument = new VarArgument(instruction.getResultVar());
-        Register rax = memoryManager.getSpecificRegisterWithVar("rax", instruction.getLeftVar(), false);
+        Register rax = memoryManager.getSpecificRegisterWithVar("rax", instruction.getLeftVar(), false,instruction);
         memoryManager.lockRegister(rax);
         Register rdx = memoryManager.getSpecificRegister("rdx");
         memoryManager.lockRegister(rdx);
-        memoryManager.freeRegister(rdx);
+        memoryManager.freeRegister(rdx,instruction);
 
         assemblyTranslator.emmitAssemblyInstruction(resetRegister(rdx));
 
-        MemoryLocation leftVarLocation = memoryManager.getLocation(instruction.getRightVar());
+        MemoryLocation leftVarLocation = memoryManager.getLocation(instruction.getRightVar(),instruction);
         if(leftVarLocation instanceof LitPseudoLocation){
-            leftVarLocation = memoryManager.getRegisterContaining(instruction.getRightVar(),false);
+            leftVarLocation = memoryManager.getRegisterContaining(instruction.getRightVar(),false, instruction);
         }
 
         assemblyTranslator.emmitAssemblyInstruction(divInstruction(leftVarLocation));
@@ -84,8 +84,8 @@ public class BinaryInstructionTranslator {
     }
 
     static public void translateIntAddTimes(BinaryInstruction instruction, MemoryManager memoryManager, AssemblyTranslator assemblyTranslator) {
-        Register resultRegister = memoryManager.getRegisterContaining(instruction.getLeftVar(), true);
-        MemoryLocation rightVarLocation = memoryManager.getLocation(instruction.getRightVar());
+        Register resultRegister = memoryManager.getRegisterContaining(instruction.getLeftVar(), true, instruction);
+        MemoryLocation rightVarLocation = memoryManager.getLocation(instruction.getRightVar(),instruction);
 
         memoryManager.removeVarFromLocation(instruction.getLeftVar(), resultRegister);
 

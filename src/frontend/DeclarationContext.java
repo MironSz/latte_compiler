@@ -13,7 +13,13 @@ public class DeclarationContext {
     private Type expectedResultType;
     private DeclarationContext parent;
 
+    public static HashMap<Object, Type> getTypes() {
+        return types;
+    }
 
+    public static Map<String, List<String>> getParamsInFunction() {
+        return paramsInFunction;
+    }
 
     private String currentFunction;
     public DeclarationContext() {
@@ -44,19 +50,7 @@ public class DeclarationContext {
         this.currentFunction = declarationContext.currentFunction;
     }
 
-    public static Type getType(Expr exp) {
-        return types.get(exp);
-    }
 
-    public static Set<String> allFunctions(){
-        return paramsInFunction.keySet();
-    }
-    public  static List<String> paramsInFunction(String function){
-        return new LinkedList<>(paramsInFunction.getOrDefault(function,new LinkedList<>()));
-    }
-    public static Integer numberOfParamsInFunction(String function) {
-        return paramsInFunction.getOrDefault(function, new LinkedList<>()).size();
-    }
 
     public void addParamToFunction(String param){
         if (!paramsInFunction.containsKey(currentFunction))

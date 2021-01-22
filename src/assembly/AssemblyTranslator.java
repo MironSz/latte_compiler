@@ -5,7 +5,6 @@ import assembly.memory.MemoryManager;
 import assembly.memory.Producer;
 import assembly.memory.locations.LitPseudoLocation;
 import assembly.memory.locations.Register;
-import frontend.DeclarationContext;
 import latte.Absyn.*;
 import quadCode.syntax.Block;
 import quadCode.syntax.instructions.*;
@@ -24,6 +23,25 @@ import static assembly.AssemblyInstructions.*;
 
 //Wynik w eaxie
 public class AssemblyTranslator extends Producer {
+    QuadCode quadCode;
+
+    public AssemblyTranslator(QuadCode quadCode) {
+        this.quadCode = quadCode;
+        for (Block block : quadCode.getBlocks()) {
+            Instruction prevInstr = null;
+            for (Instruction instruction : block.getInstructions()) {
+                if (prevInstr != null) {
+                    prevInstr.setNextInstruction(instruction);
+                }
+                prevInstr = instruction;
+            }
+            if (block.getNextBlock() instanceof RetJump) {
+                if (prevInstr != null)
+                    prevInstr.setNextInstruction(((RetJump) block.getNextBlock()).getReturnInstruction());
+            }
+        }
+    }
+
     HashMap<String, Integer> numberOfVarsInFunction = new HashMap<String, Integer>();
     String currentFunction;
 
@@ -31,7 +49,7 @@ public class AssemblyTranslator extends Producer {
         translateLabel(block.getLabel());
 
 //        Stad się biorą paramsy
-        List<String> varsInFunction = DeclarationContext.paramsInFunction(block.getLabel());
+        List<String> varsInFunction = quadCode.paramsInFunction(block.getLabel());
         int numberOfParams = varsInFunction.size();
         List<String> allLiterals = new LinkedList<>();
         currentFunction = block.getLabel();
@@ -40,14 +58,15 @@ public class AssemblyTranslator extends Producer {
         numberOfVarsInFunction.put(block.getLabel(), varsInFunction.size() - numberOfParams);
 
 
-        int numberOfParamsInFunction = DeclarationContext.numberOfParamsInFunction(block.getLabel());
+        int numberOfParamsInFunction = quadCode.numberOfParamsInFunction(block.getLabel());
 
         memoryManager.initManagerForFunction(block.getLabel(), varsInFunction, allLiterals, numberOfParamsInFunction);
 
 
         block.isAlreadyTranslated = true;
         block.getInstructions().forEach(instruction -> instruction.translate(this, memoryManager));
-        translate(block.getNextBlock(), memoryManager);
+        if (block.getLastInstruction() != null)
+            translate(block.getNextBlock(), memoryManager, block.getLastInstruction());
         block.getNextBlock().allNextBlocks().forEach(block1 -> {
             if (!block1.isAlreadyTranslated) {
                 memoryManager.resetManager();
@@ -60,7 +79,7 @@ public class AssemblyTranslator extends Producer {
         block.isAlreadyTranslated = true;
         translateLabel(block.getLabel());
         block.getInstructions().forEach(instruction -> instruction.translate(this, memoryManager));
-        translate(block.getNextBlock(), memoryManager);
+        translate(block.getNextBlock(), memoryManager, block.getLastInstruction());
         block.getNextBlock().allNextBlocks().forEach(block1 -> {
             if (!block1.isAlreadyTranslated) {
                 memoryManager.resetManager();
@@ -141,21 +160,22 @@ public class AssemblyTranslator extends Producer {
             emmitAssemblyInstruction(popInstruction(register));
     }
 
-    public void translate(List<Block> blocks, MemoryManager memoryManager) {
-        codePrefix(blocks, memoryManager);
-        blocks.forEach(block -> {
-            if (DeclarationContext.allFunctions().contains(block.getLabel())) {
+    public void translate(MemoryManager memoryManager) {
+        codePrefix(quadCode.blocks, memoryManager);
+        quadCode.blocks.forEach(block -> {
+            if (quadCode.allFunctions().contains(block.getLabel())) {
                 translateFunction(block, memoryManager);
             }
         });
     }
 
+
     private void translateLabel(String label) {
         emmitAssemblyInstruction("_" + label + ":");
     }
 
-    private void translate(BlockJump blockJump, MemoryManager memoryManager) {
-        memoryManager.dumpAllDataToMem();
+    private void translate(BlockJump blockJump, MemoryManager memoryManager, Instruction lastInstruction) {
+        memoryManager.dumpAllDataToMem(lastInstruction);
         if (blockJump instanceof SimpleJump) {
             emmitAssemblyInstruction(jmpInstruction(blockJump.allNextBlocks().get(0).getLabel()));
         } else if (blockJump instanceof RetJump) {
@@ -169,7 +189,7 @@ public class AssemblyTranslator extends Producer {
 
 
     public void translate(BinaryInstruction instruction, MemoryManager memoryManager) {
-        Type operationType = DeclarationContext.getType(instruction.getExpr());
+        Type operationType = quadCode.getType(instruction.getExpr());
         if (operationType instanceof Int) {
             if (instruction.getExpr() instanceof EAdd ||
                     (instruction.getExpr() instanceof EMul && ((EMul) instruction.getExpr()).mulop_ instanceof Times)) {
@@ -178,12 +198,12 @@ public class AssemblyTranslator extends Producer {
             } else if (instruction.getExpr() instanceof EMul) {
                 BinaryInstructionTranslator.translateDiv(instruction, memoryManager, this);
             }
-        } else if (DeclarationContext.getType(instruction.getExpr()) instanceof Str) {
+        } else if (quadCode.getType(instruction.getExpr()) instanceof Str) {
             if (instruction.getExpr() instanceof EAdd) {
                 BinaryInstructionTranslator.translateAddStr(instruction, memoryManager, this);
             }
         } else if (instruction.getExpr() instanceof ERel) {
-                BinaryInstructionTranslator.translateIntCmp(instruction, memoryManager, this);
+            BinaryInstructionTranslator.translateIntCmp(instruction, memoryManager, this);
         }
     }
 
@@ -194,11 +214,11 @@ public class AssemblyTranslator extends Producer {
     }
 
     public void translate(CallInstruction instruction, MemoryManager memoryManager) {
-        memoryManager.dumpAllDataToMem();
+        memoryManager.dumpAllDataToMem(instruction);
         emmitAssemblyInstruction(callInstruction(instruction.getFunction()));
 
-        if (instruction.getResultVar() != null && !instruction.getResultVar().equals("")){
-            memoryManager.removeVarFromOtherLocations(new VarArgument((instruction.getResultVar())),null);
+        if (instruction.getResultVar() != null && !instruction.getResultVar().equals("")) {
+            memoryManager.removeVarFromOtherLocations(new VarArgument((instruction.getResultVar())), null);
             memoryManager.addVarToSpecificLocation(
                     memoryManager.getSpecificRegister("rax"),
                     new VarArgument(instruction.getResultVar())
@@ -206,16 +226,16 @@ public class AssemblyTranslator extends Producer {
         }
 
 
-        memoryManager.restoreAllData(DeclarationContext.numberOfParamsInFunction(instruction.getFunction()));
+        memoryManager.restoreAllData(quadCode.numberOfParamsInFunction(instruction.getFunction()));
         Register rax = memoryManager.getSpecificRegister("rax");
         memoryManager.addVarToSpecificLocation(rax, new VarArgument(instruction.getResultVar()));
-        memoryManager.removeVarFromOtherLocations(new VarArgument(instruction.getResultVar()),rax);
+        memoryManager.removeVarFromOtherLocations(new VarArgument(instruction.getResultVar()), rax);
 
     }
 
 
     public void translate(ParamInnstruction instruction, MemoryManager memoryManager) {
-        String push = pushInstruction(memoryManager.getLocation(instruction.getParam()));
+        String push = pushInstruction(memoryManager.getLocation(instruction.getParam(), instruction));
         memoryManager.incrementParamsOnStackCounter();
         emmitAssemblyInstruction(push);
     }
@@ -224,7 +244,7 @@ public class AssemblyTranslator extends Producer {
         int numberOfVarsToRemove = numberOfVarsInFunction.get(currentFunction);
 
         if (!(instruction.getResultVariable() instanceof VoidArgument))
-            memoryManager.getSpecificRegisterWithVar("rax", instruction.getResultVariable(), false);
+            memoryManager.getSpecificRegisterWithVar("rax", instruction.getResultVariable(), false, instruction);
 
         emmitAssemblyInstruction(addInstruction(
                 new Register("rsp"),
@@ -236,8 +256,8 @@ public class AssemblyTranslator extends Producer {
 
 
     public void translate(CompareInstruction instruction, MemoryManager memoryManager) {
-        Register leftRegister = memoryManager.getRegisterContaining(instruction.getLeft(), true);
-        MemoryLocation rightVarLocation = memoryManager.getLocation(instruction.getRight());
+        Register leftRegister = memoryManager.getRegisterContaining(instruction.getLeft(), true, instruction);
+        MemoryLocation rightVarLocation = memoryManager.getLocation(instruction.getRight(), instruction);
         emmitAssemblyInstruction(cmpInstruction(leftRegister, rightVarLocation));
     }
 

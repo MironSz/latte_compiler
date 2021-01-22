@@ -19,12 +19,6 @@ $(CLASS): $(SOURCES)
 
 main :  $(CLASS)
 
-
-
-
-
-
-
 .PHONY : absyn
 
 %.class : %.java

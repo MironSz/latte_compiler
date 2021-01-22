@@ -68,4 +68,10 @@ public class Block {
     public void setNextBlock(BlockJump nextBlock) {
         this.nextBlock = nextBlock;
     }
+
+    public Instruction getLastInstruction() {
+        if (instructions.isEmpty())
+            return null;
+        return instructions.get(instructions.size() - 1);
+    }
 }

@@ -2,6 +2,7 @@ package quadCode.syntax.instructions;
 
 import assembly.AssemblyTranslator;
 import assembly.memory.MemoryManager;
+import quadCode.syntax.Block;
 import quadCode.syntax.instructions.arguments.InstructionArgument;
 import quadCode.syntax.instructions.arguments.VarArgument;
 import quadCode.translator.TranslatorVisitor;
@@ -9,10 +10,22 @@ import quadCode.translator.TranslatorVisitor;
 import java.util.List;
 
 public abstract class Instruction {
+    private Instruction nextInstruction = null;
     public abstract void setResultVar(String resultVar);
     public abstract String getResultVar();
     public abstract void translate(AssemblyTranslator assemblyTranslator, MemoryManager memoryManagement);
     public abstract List<String> allVarNamesInInstruction();
     public abstract List<InstructionArgument> allArgsInInstruction();
 
+    public Instruction getNextInstruction() {
+        return nextInstruction;
+    }
+
+    public void addNextInstruction(Instruction instruction){
+
+    }
+
+    public void setNextInstruction(Instruction nextInstruction) {
+        this.nextInstruction = nextInstruction;
+    }
 }
