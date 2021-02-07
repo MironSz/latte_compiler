@@ -79,7 +79,7 @@ public class LivenessOptimization extends Optimization {
             Set<InstructionArgument> used = new HashSet<>(instruction.allArgsInInstruction());
             Set<InstructionArgument> killed = new HashSet<>();
             if (instruction.getResultVar() != null && !instruction.getResultVar().equals("")) {
-                killed.add(new VarArgument(instruction.getResultVar()));
+                killed.add(instruction.getResultVar());
             }
 
             if (!quadCode.alliveAfter.getOrDefault(instruction, new HashSet<>()).equals(prevOut)) {

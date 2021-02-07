@@ -32,8 +32,8 @@ public class BinaryInstructionTranslator {
         assemblyTranslator.emmitAssemblyInstruction(movInstruction("1", resultLocation.assemblyCode()));
         assemblyTranslator.emmitAssemblyInstruction(finalLabel + ":");
 
-        memoryManager.addVarToSpecificLocation(resultLocation, new VarArgument(instruction.getResultVar()));
-        memoryManager.removeVarFromOtherLocations(new VarArgument(instruction.getResultVar()), resultLocation);
+        memoryManager.addVarToSpecificLocation(resultLocation, instruction.getResultVar());
+        memoryManager.removeVarFromOtherLocations(instruction.getResultVar(), resultLocation);
     }
 
     static public void translateAddStr(BinaryInstruction instruction, MemoryManager memoryManager, AssemblyTranslator assemblyTranslator) {
@@ -52,12 +52,12 @@ public class BinaryInstructionTranslator {
         memoryManager.restoreAllData(2);
 
         Register rax = memoryManager.getSpecificRegister("rax");
-        memoryManager.addVarToSpecificLocation(rax, new VarArgument(instruction.getResultVar()));
-        memoryManager.removeVarFromOtherLocations(new VarArgument(instruction.getResultVar()), rax);
+        memoryManager.addVarToSpecificLocation(rax, instruction.getResultVar());
+        memoryManager.removeVarFromOtherLocations(instruction.getResultVar(), rax);
     }
 
     static public void translateDiv(BinaryInstruction instruction, MemoryManager memoryManager, AssemblyTranslator assemblyTranslator) {
-        VarArgument resultArgument = new VarArgument(instruction.getResultVar());
+        VarArgument resultArgument = (VarArgument) instruction.getResultVar();
         Register rax = memoryManager.getSpecificRegisterWithVar("rax", instruction.getLeftVar(), false,instruction);
         memoryManager.lockRegister(rax);
         Register rdx = memoryManager.getSpecificRegister("rdx");
@@ -99,7 +99,7 @@ public class BinaryInstructionTranslator {
             assemblyInstruction = mulInstruction(resultRegister, rightVarLocation);
 
         assemblyTranslator.emmitAssemblyInstruction(assemblyInstruction);
-        memoryManager.removeVarFromOtherLocations(new VarArgument(instruction.getResultVar()), resultRegister);
-        memoryManager.addVarToSpecificLocation(resultRegister, new VarArgument(instruction.getResultVar()));
+        memoryManager.removeVarFromOtherLocations(instruction.getResultVar(), resultRegister);
+        memoryManager.addVarToSpecificLocation(resultRegister, instruction.getResultVar());
     }
 }

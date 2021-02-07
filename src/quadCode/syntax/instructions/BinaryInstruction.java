@@ -12,18 +12,18 @@ import java.util.List;
 
 public class BinaryInstruction extends Instruction {
     InstructionArgument leftVar, rightVar;
-    String resultVar;
+    InstructionArgument resultVar;
     Expr expr; // add,sub,mul, div, mod, or, and ...
-    public  boolean intCompare = false;
+    public boolean intCompare = false;
     public boolean strCompare = false;
 
-    public BinaryInstruction(InstructionArgument leftVar, InstructionArgument rightVar, String resultVar, Expr expr, boolean intCompare, boolean strCompare) {
+    public BinaryInstruction(InstructionArgument leftVar, InstructionArgument rightVar, InstructionArgument resultVar, Expr expr, boolean intCompare, boolean strCompare) {
         this(leftVar, rightVar, resultVar, expr);
         this.intCompare = intCompare;
         this.strCompare = strCompare;
     }
 
-    public BinaryInstruction(InstructionArgument leftVar, InstructionArgument rightVar, String resultVar, Expr expr) {
+    public BinaryInstruction(InstructionArgument leftVar, InstructionArgument rightVar, InstructionArgument resultVar, Expr expr) {
 
         this.leftVar = leftVar;
         this.rightVar = rightVar;
@@ -32,7 +32,15 @@ public class BinaryInstruction extends Instruction {
     }
 
     @Override
-    public String getResultVar() {
+    public void changeArgument(InstructionArgument from, InstructionArgument to) {
+        if (leftVar == from)
+            leftVar = to;
+        else if (rightVar == from)
+            rightVar = to;
+    }
+
+    @Override
+    public InstructionArgument getResultVar() {
         return resultVar;
     }
 
@@ -48,19 +56,15 @@ public class BinaryInstruction extends Instruction {
             result.add(leftVar.assemblyName());
         if (rightVar instanceof VarArgument)
             result.add(rightVar.assemblyName());
-        result.add(resultVar);
+        result.add(resultVar.assemblyName());
         return result;
     }
 
     @Override
     public List<InstructionArgument> allArgsInInstruction() {
-        return Arrays.asList(leftVar,rightVar);
+        return Arrays.asList(leftVar, rightVar);
     }
 
-    @Override
-    public void setResultVar(String resultVar) {
-        this.resultVar = resultVar;
-    }
 
     @Override
     public String toString() {

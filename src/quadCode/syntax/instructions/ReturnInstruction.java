@@ -17,14 +17,10 @@ public class ReturnInstruction extends Instruction {
     }
 
     @Override
-    public String getResultVar() {
-        return resultVariable.assemblyName();
+    public InstructionArgument getResultVar() {
+        return resultVariable;
     }
 
-    @Override
-    public void setResultVar(String resultVar) {
-
-    }
 
     @Override
     public void translate(AssemblyTranslator assemblyTranslator, MemoryManager memoryManagement) {
@@ -49,7 +45,14 @@ public class ReturnInstruction extends Instruction {
         return Collections.singletonList(resultVariable);
     }
 
+    @Override
+    public void changeArgument(InstructionArgument from, InstructionArgument to) {
+        resultVariable = to;
+    }
+
     public InstructionArgument getResultVariable() {
         return resultVariable;
     }
+
+
 }

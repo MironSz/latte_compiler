@@ -4,11 +4,14 @@ public abstract class Expr implements java.io.Serializable {
   public abstract <R,A> R accept(Expr.Visitor<R,A> v, A arg);
   public interface Visitor <R,A> {
     public R visit(latte.Absyn.EVar p, A arg);
+    public R visit(latte.Absyn.ECast p, A arg);
+    public R visit(latte.Absyn.ENewObj p, A arg);
     public R visit(latte.Absyn.ELitInt p, A arg);
     public R visit(latte.Absyn.ELitTrue p, A arg);
     public R visit(latte.Absyn.ELitFalse p, A arg);
     public R visit(latte.Absyn.EApp p, A arg);
     public R visit(latte.Absyn.EString p, A arg);
+    public R visit(latte.Absyn.ENull p, A arg);
     public R visit(latte.Absyn.Neg p, A arg);
     public R visit(latte.Absyn.Not p, A arg);
     public R visit(latte.Absyn.EMul p, A arg);

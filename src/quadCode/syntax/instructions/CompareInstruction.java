@@ -4,44 +4,46 @@ import assembly.AssemblyTranslator;
 import assembly.memory.MemoryManager;
 import quadCode.syntax.instructions.arguments.InstructionArgument;
 import quadCode.syntax.instructions.arguments.VarArgument;
-import quadCode.syntax.instructions.arguments.VoidArgument;
 
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
 public class CompareInstruction extends Instruction {
-    InstructionArgument left, right;
+    InstructionArgument leftVar, rightVar;
 
-    public CompareInstruction(InstructionArgument left, InstructionArgument right) {
-        this.left = left;
-        this.right = right;
+    public CompareInstruction(InstructionArgument leftVar, InstructionArgument rightVar) {
+        this.leftVar = leftVar;
+        this.rightVar = rightVar;
     }
 
-    public InstructionArgument getLeft() {
-        return left;
+    public InstructionArgument getLeftVar() {
+        return leftVar;
     }
 
-    public void setLeft(InstructionArgument left) {
-        this.left = left;
+    public void setLeftVar(InstructionArgument leftVar) {
+        this.leftVar = leftVar;
     }
 
-    public InstructionArgument getRight() {
-        return right;
+    public InstructionArgument getRightVar() {
+        return rightVar;
     }
 
-    public void setRight(InstructionArgument right) {
-        this.right = right;
-    }
-
-    @Override
-    public void setResultVar(String resultVar) {
-
+    public void setRightVar(InstructionArgument rightVar) {
+        this.rightVar = rightVar;
     }
 
     @Override
-    public String getResultVar() {
-        return null;
+    public void changeArgument(InstructionArgument from, InstructionArgument to) {
+        if (leftVar == from)
+            leftVar = to;
+        else if (rightVar == from)
+            rightVar = to;
+    }
+
+    @Override
+    public InstructionArgument getResultVar() {
+        throw new RuntimeException("This shouldn't happen");
     }
 
     @Override
@@ -52,18 +54,18 @@ public class CompareInstruction extends Instruction {
     @Override
     public List<String> allVarNamesInInstruction() {
         List<String> result = new LinkedList<>();
-        if (left instanceof VarArgument) {
-            result.add(((VarArgument) left).getVarName());
+        if (leftVar instanceof VarArgument) {
+            result.add(((VarArgument) leftVar).getVarName());
         }
-        if (right instanceof VarArgument) {
-            result.add(((VarArgument) right).getVarName());
+        if (rightVar instanceof VarArgument) {
+            result.add(((VarArgument) rightVar).getVarName());
         }
         return result;
     }
 
     @Override
     public List<InstructionArgument> allArgsInInstruction() {
-        return Arrays.asList(left,right);
+        return Arrays.asList(leftVar, rightVar);
     }
 
 }

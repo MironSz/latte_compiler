@@ -5,9 +5,7 @@ import latte.Absyn.*;
 import latte.FoldVisitor;
 import quadCode.syntax.Block;
 import quadCode.syntax.instructions.*;
-import quadCode.syntax.instructions.arguments.LitArgument;
-import quadCode.syntax.instructions.arguments.VarArgument;
-import quadCode.syntax.instructions.arguments.VoidArgument;
+import quadCode.syntax.instructions.arguments.*;
 import quadCode.syntax.jumps.CondJump;
 import quadCode.syntax.jumps.RetJump;
 import quadCode.syntax.jumps.SimpleJump;
@@ -23,27 +21,46 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
         return y;
     }
 
+    private InstructionArgument targetToArgument(Target target, TranslationContext arg) {
+        if (target instanceof Variable) {
+            return new VarArgument(((Variable) target).ident_);
+        } else if (target instanceof FieldT) {
+            ReturnType returnType = ((FieldT) target).expr_.accept(this, arg);
+            return returnType.getResultVar();
+        } else {
+            throw new RuntimeException("Target of unknown type " + target);
+        }
+    }
+
     ReturnType visitTrinaryExpression(Expr expr, Expr lExpr, Expr rExpr, TranslationContext arg, boolean intCompare) {
         ReturnType rLeft = lExpr.accept(this, arg);
         ReturnType rRight = rExpr.accept(this, arg);
 
-        String resultVar = arg.getNewResultVar();
+        InstructionArgument resultVar = new VarArgument(arg.getNewResultVar());
         Instruction instruction = new BinaryInstruction(rLeft.getResultVar(), rRight.getResultVar(), resultVar, expr, intCompare, false);
 
-        ReturnType result = new ReturnType(new VarArgument(resultVar));
+        ReturnType result = new ReturnType(resultVar);
         arg.addInstruction(instruction);
 
         return result;
     }
 
     @Override
-    public ReturnType visit(FnDef p, TranslationContext arg) {
+    public ReturnType visit(FunDefCode p, TranslationContext arg) {
         arg.openNewBlock(p.ident_);
         return super.visit(p, arg);
     }
 
     ReturnType visitLiteralExpression(Expr p, TranslationContext arg) {
         return new ReturnType(new LitArgument(p));
+    }
+
+    @Override
+    public ReturnType visit(ENewObj p, TranslationContext arg) {
+        InstructionArgument resultVar = new VarArgument(arg.getNewResultVar());
+        Instruction instruction = new NewObjectInstruction(resultVar,p.ident_);
+        arg.addInstruction(instruction);
+        return new ReturnType(resultVar);
     }
 
     @Override
@@ -78,13 +95,28 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
     }
 
     @Override
+    public ReturnType visit(Variable p, TranslationContext arg) {
+        return new ReturnType(new VarArgument(p.ident_));
+    }
+
+    @Override
+    public ReturnType visit(FieldT p, TranslationContext arg) {
+        ReturnType exprResult = p.expr_.accept(this, arg);
+        ClassType typeOfObject = (ClassType) DeclarationContext.getTypes().get(p.expr_);
+        FieldArgument fieldArgument = new FieldArgument(typeOfObject, p.ident_, exprResult.getResultVar());
+        return new ReturnType(fieldArgument);
+    }
+
+    @Override
     public ReturnType visit(EApp p, TranslationContext arg) {
+        ReturnType functionToCall = p.target_.accept(this, arg);
+
         for (Expr expr : p.listexpr_) {
             ReturnType returnType = expr.accept(this, arg);
             arg.addInstruction(new ParamInnstruction(returnType.getResultVar()));
         }
         String resultVar = arg.getNewResultVar();
-        Instruction instruction = new CallInstruction(resultVar, p.ident_);
+        Instruction instruction = new CallInstruction(new VarArgument(resultVar), functionToCall.getResultVar());
         arg.addInstruction(instruction);
         return new ReturnType(new VarArgument(resultVar));
     }
@@ -112,16 +144,19 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
 
     @Override
     public ReturnType visit(Ass p, TranslationContext arg) {
-        ReturnType result = p.expr_.accept(this, arg);
-        Instruction instruction = new AssignmentInstruction(p.ident_, result.getResultVar());
+        ReturnType exprResult = p.expr_.accept(this, arg);
+        ReturnType targetResult = p.target_.accept(this, arg);
+        Instruction instruction = new AssignmentInstruction(targetResult.getResultVar(), exprResult.getResultVar());
         arg.addInstruction(instruction);
-        return result;
+        return exprResult;
     }
 
 
     @Override
     public ReturnType visit(EVar p, TranslationContext arg) {
-        return new ReturnType(new VarArgument(p.ident_));
+        ReturnType targetResult = p.target_.accept(this, arg);
+
+        return targetResult;
     }
 
     @Override
@@ -219,7 +254,7 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
         String writeFalseLabel = arg.newLabel("WRITE_FALSE");
         String finalLabel = arg.newLabel("FINAL");
         String rightExpression = arg.newLabel("RIGHT_EXPR");
-        String resultVar = arg.getNewResultVar();
+        InstructionArgument resultVar = new VarArgument(arg.getNewResultVar());
 
         CondJump trueOrRight = new CondJump();
         CondJump trueOrFalse = new CondJump();
@@ -252,7 +287,7 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
         arg.openNewBlock(finalLabel);
         jumpToFinal.setNextBlock(arg.getCurrentBlock());
 
-        ReturnType result = new ReturnType(new VarArgument(resultVar));
+        ReturnType result = new ReturnType(resultVar);
         return result;
     }
 
@@ -264,7 +299,8 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
 
         String finalLabel = arg.newLabel("FINAL");
         String rightExpression = arg.newLabel("RIGHT_EXPR");
-        String resultVar = arg.getNewResultVar();
+        InstructionArgument resultVar = new VarArgument(arg.getNewResultVar());
+
 
         CondJump falseOrRight = new CondJump();
         CondJump trueOrFalse = new CondJump();
@@ -296,29 +332,30 @@ public class TranslatorVisitor extends FoldVisitor<ReturnType, TranslationContex
         arg.openNewBlock(finalLabel);
         jumpToFinal.setNextBlock(arg.getCurrentBlock());
 
-        ReturnType result = new ReturnType(new VarArgument(resultVar));
+        ReturnType result = new ReturnType(resultVar);
         return result;
     }
 
     @Override
     public ReturnType visit(Init p, TranslationContext arg) {
         ReturnType returnType = p.expr_.accept(this, arg);
-        arg.addInstruction(new AssignmentInstruction(p.ident_, returnType.getResultVar()));
+        arg.addInstruction(new AssignmentInstruction(new VarArgument(p.ident_), returnType.getResultVar()));
         return returnType;
     }
 
     @Override
     public ReturnType visit(Decr p, TranslationContext arg) {
-        Expr sub = new EAdd(new EVar(p.ident_), new Minus(), new ELitInt(1));
+
+        Expr sub = new EAdd(new EVar(p.target_), new Minus(), new ELitInt(1));
         DeclarationContext.saveType(sub, new Int());
-        return new Ass(p.ident_, sub).accept(this, arg);
+        return new Ass(p.target_, sub).accept(this, arg);
     }
 
     @Override
     public ReturnType visit(Incr p, TranslationContext arg) {
-        Expr add = new EAdd(new EVar(p.ident_), new Plus(), new ELitInt(1));
+        Expr add = new EAdd(new EVar(p.target_), new Plus(), new ELitInt(1));
         DeclarationContext.saveType(add, new Int());
-        return new Ass(p.ident_, add).accept(this, arg);
+        return new Ass(p.target_, add).accept(this, arg);
     }
 
     @Override

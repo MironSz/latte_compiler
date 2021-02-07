@@ -5,6 +5,7 @@ import java.util.Objects;
 public class VarArgument extends InstructionArgument {
     String varName;
 
+
     public String getVarName() {
         return varName;
     }

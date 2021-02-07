@@ -24,6 +24,19 @@ public class VisitSkel
   {
     public R visit(latte.Absyn.FnDef p, A arg)
     { /* Code for FnDef goes here */
+      p.fundef_.accept(new FunDefVisitor<R,A>(), arg);
+      return null;
+    }
+    public R visit(latte.Absyn.ClassDef p, A arg)
+    { /* Code for ClassDef goes here */
+      p.class_.accept(new ClassVisitor<R,A>(), arg);
+      return null;
+    }
+  }
+  public class FunDefVisitor<R,A> implements latte.Absyn.FunDef.Visitor<R,A>
+  {
+    public R visit(latte.Absyn.FunDefCode p, A arg)
+    { /* Code for FunDefCode goes here */
       p.type_.accept(new TypeVisitor<R,A>(), arg);
       //p.ident_;
       for (latte.Absyn.Arg x: p.listarg_) {
@@ -38,6 +51,56 @@ public class VisitSkel
     public R visit(latte.Absyn.ArgCode p, A arg)
     { /* Code for ArgCode goes here */
       p.type_.accept(new TypeVisitor<R,A>(), arg);
+      //p.ident_;
+      return null;
+    }
+  }
+  public class ClassVisitor<R,A> implements latte.Absyn.Class.Visitor<R,A>
+  {
+    public R visit(latte.Absyn.ClassCode p, A arg)
+    { /* Code for ClassCode goes here */
+      //p.ident_;
+      for (latte.Absyn.ClassStmt x: p.listclassstmt_) {
+        x.accept(new ClassStmtVisitor<R,A>(), arg);
+      }
+      return null;
+    }
+    public R visit(latte.Absyn.ClassExt p, A arg)
+    { /* Code for ClassExt goes here */
+      //p.ident_1;
+      //p.ident_2;
+      for (latte.Absyn.ClassStmt x: p.listclassstmt_) {
+        x.accept(new ClassStmtVisitor<R,A>(), arg);
+      }
+      return null;
+    }
+  }
+  public class ClassStmtVisitor<R,A> implements latte.Absyn.ClassStmt.Visitor<R,A>
+  {
+    public R visit(latte.Absyn.Fields p, A arg)
+    { /* Code for Fields goes here */
+      p.type_.accept(new TypeVisitor<R,A>(), arg);
+      for (String x: p.listident_) {
+        //x;
+      }
+      return null;
+    }
+    public R visit(latte.Absyn.Method p, A arg)
+    { /* Code for Method goes here */
+      p.fundef_.accept(new FunDefVisitor<R,A>(), arg);
+      return null;
+    }
+  }
+  public class TargetVisitor<R,A> implements latte.Absyn.Target.Visitor<R,A>
+  {
+    public R visit(latte.Absyn.Variable p, A arg)
+    { /* Code for Variable goes here */
+      //p.ident_;
+      return null;
+    }
+    public R visit(latte.Absyn.FieldT p, A arg)
+    { /* Code for FieldT goes here */
+      p.expr_.accept(new ExprVisitor<R,A>(), arg);
       //p.ident_;
       return null;
     }
@@ -73,18 +136,18 @@ public class VisitSkel
     }
     public R visit(latte.Absyn.Ass p, A arg)
     { /* Code for Ass goes here */
-      //p.ident_;
+      p.target_.accept(new TargetVisitor<R,A>(), arg);
       p.expr_.accept(new ExprVisitor<R,A>(), arg);
       return null;
     }
     public R visit(latte.Absyn.Incr p, A arg)
     { /* Code for Incr goes here */
-      //p.ident_;
+      p.target_.accept(new TargetVisitor<R,A>(), arg);
       return null;
     }
     public R visit(latte.Absyn.Decr p, A arg)
     { /* Code for Decr goes here */
-      //p.ident_;
+      p.target_.accept(new TargetVisitor<R,A>(), arg);
       return null;
     }
     public R visit(latte.Absyn.Ret p, A arg)
@@ -153,6 +216,11 @@ public class VisitSkel
     { /* Code for Void goes here */
       return null;
     }
+    public R visit(latte.Absyn.ClassType p, A arg)
+    { /* Code for ClassType goes here */
+      //p.ident_;
+      return null;
+    }
     public R visit(latte.Absyn.Fun p, A arg)
     { /* Code for Fun goes here */
       p.type_.accept(new TypeVisitor<R,A>(), arg);
@@ -166,6 +234,17 @@ public class VisitSkel
   {
     public R visit(latte.Absyn.EVar p, A arg)
     { /* Code for EVar goes here */
+      p.target_.accept(new TargetVisitor<R,A>(), arg);
+      return null;
+    }
+    public R visit(latte.Absyn.ECast p, A arg)
+    { /* Code for ECast goes here */
+      //p.ident_;
+      p.expr_.accept(new ExprVisitor<R,A>(), arg);
+      return null;
+    }
+    public R visit(latte.Absyn.ENewObj p, A arg)
+    { /* Code for ENewObj goes here */
       //p.ident_;
       return null;
     }
@@ -184,7 +263,7 @@ public class VisitSkel
     }
     public R visit(latte.Absyn.EApp p, A arg)
     { /* Code for EApp goes here */
-      //p.ident_;
+      p.target_.accept(new TargetVisitor<R,A>(), arg);
       for (latte.Absyn.Expr x: p.listexpr_) {
         x.accept(new ExprVisitor<R,A>(), arg);
       }
@@ -193,6 +272,10 @@ public class VisitSkel
     public R visit(latte.Absyn.EString p, A arg)
     { /* Code for EString goes here */
       //p.string_;
+      return null;
+    }
+    public R visit(latte.Absyn.ENull p, A arg)
+    { /* Code for ENull goes here */
       return null;
     }
     public R visit(latte.Absyn.Neg p, A arg)

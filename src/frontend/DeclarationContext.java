@@ -1,5 +1,6 @@
 package frontend;
 
+import javafx.util.Pair;
 import latte.Absyn.Void;
 import latte.Absyn.*;
 
@@ -13,6 +14,18 @@ public class DeclarationContext {
     private Type expectedResultType;
     private DeclarationContext parent;
 
+    private ClassSignature currentClass;
+    private FunctionSignature currentFunction;
+
+
+    public DeclarationContext setCurrentClass(String name) {
+        DeclarationContext declarationContext = new DeclarationContext(this);
+        declarationContext.currentClass = new ClassSignature(name);
+
+        return declarationContext;
+    }
+
+
     public static HashMap<Object, Type> getTypes() {
         return types;
     }
@@ -21,7 +34,7 @@ public class DeclarationContext {
         return paramsInFunction;
     }
 
-    private String currentFunction;
+
     public DeclarationContext() {
         nameToType = new HashMap<>();
 
@@ -33,7 +46,7 @@ public class DeclarationContext {
 
         paramsInFunction.put("printString", Collections.singletonList("s"));
         paramsInFunction.put("printInt", Collections.singletonList("i"));
-        paramsInFunction.put("addTwoStrings", Arrays.asList("s1","s2"));
+        paramsInFunction.put("addTwoStrings", Arrays.asList("s1", "s2"));
 
         nameToType.put("printString", new Fun(new Void(), printStringTypes));
         nameToType.put("printInt", new Fun(new Void(), printIntTypes));
@@ -48,14 +61,12 @@ public class DeclarationContext {
         this();
         this.parent = declarationContext;
         this.currentFunction = declarationContext.currentFunction;
+        this.currentClass = declarationContext.currentClass;
     }
 
 
-
-    public void addParamToFunction(String param){
-        if (!paramsInFunction.containsKey(currentFunction))
-            paramsInFunction.put(currentFunction,new LinkedList<>());
-        paramsInFunction.get(currentFunction).add(param);
+    public void addParamToFunction(String param) {
+        currentFunction.addParameter(param, nameToType.get(param));
     }
 
 
@@ -68,15 +79,22 @@ public class DeclarationContext {
         types.put(object, type);
     }
 
-    public Fun functionToFunctionType(FnDef fnDef) {
+    public Fun functionToFunctionType(FunDefCode fnDef) {
         return new Fun(fnDef.type_, fnDef.listarg_.stream().map(arg -> ((ArgCode) arg).type_).collect(Collectors.toCollection(ListType::new)));
     }
-    public void setCurrentFunction(String currentFunction) {
-        paramsInFunction.put(currentFunction,new LinkedList<>());
-        this.currentFunction = currentFunction;
+
+    public void setCurrentFunction(String currentFunctionName, int line) {
+        this.currentFunction = FunctionSignature.getFunctionSignature(currentFunctionName);
+        if (currentFunction == null) {
+            throw new RuntimeException(SemanticErrorMessage.buildMessage(line, 0, "Function " + currentFunctionName + " is not defined"));
+        }
+
+        for (Pair<String, Type> stringTypePair : currentFunction.getArguments()) {
+            declareNewVar(stringTypePair.getKey(), stringTypePair.getValue(), line, 0);
+        }
     }
 
-    public String getCurrentFunction() {
+    public FunctionSignature getCurrentFunction() {
         return currentFunction;
     }
 
@@ -114,6 +132,8 @@ public class DeclarationContext {
         if (result.nameToType.containsKey(name)) {
             throw new RuntimeException(SemanticErrorMessage.buildMessage(line, col, "Variable " + name + " previously declared"));
         }
+        if(currentFunction!=null)
+            currentFunction.addParameter(name, type);
         result.nameToType.put(name, type);
         return result;
     }
@@ -121,5 +141,19 @@ public class DeclarationContext {
     public boolean isDeclared(String name, Type type, int line, int col) {
         Type type2 = this.getTypeOfVar(name, line, col);
         return type.equals(type2);
+    }
+
+    public Type getTypeOfField(String className, String fieldName, int line_num, int col_num) {
+        Optional<Pair<String, Type>> match = ClassSignature.getSignature(className).getFields()
+                .stream()
+                .filter(pair -> pair.getKey().equals(fieldName))
+                .findFirst();
+        if (!match.isPresent())
+            throw new RuntimeException(SemanticErrorMessage.buildMessage(line_num, col_num, "Field " + fieldName + " is not present in class " + className));
+        return match.get().getValue();
+    }
+
+    public boolean isSubclass(String subclass, String superclass) {
+        return ClassSignature.isSuperClass(subclass, superclass);
     }
 }

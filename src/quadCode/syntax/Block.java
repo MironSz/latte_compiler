@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class Block {
     public static Set<Block> allBlocks = new HashSet<>();
@@ -53,9 +54,7 @@ public class Block {
         this.instructions.add(instruction);
     }
 
-    public void setResultVar(String name) {
-        instructions.get(instructions.size() - 1).setResultVar(name);
-    }
+
 
     public String getLabel() {
         return label;
@@ -73,5 +72,9 @@ public class Block {
         if (instructions.isEmpty())
             return null;
         return instructions.get(instructions.size() - 1);
+    }
+
+    public void removeClassFields(){
+        instructions = instructions.stream().map(Instruction::removeFields).flatMap(List::stream).collect(Collectors.toList());
     }
 }

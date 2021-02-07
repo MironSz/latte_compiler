@@ -5,7 +5,9 @@ import assembly.memory.MemoryManager;
 import assembly.memory.Producer;
 import assembly.memory.locations.Register;
 import frontend.*;
+import latte.Absyn.Int;
 import latte.Yylex;
+import latte.parser;
 import quadCode.syntax.Block;
 import quadCode.translator.TranslationContext;
 import quadCode.translator.TranslatorVisitor;
@@ -17,7 +19,7 @@ import java.util.LinkedList;
 
 public class Main {
     Yylex l;
-    latte.parser p;
+    parser p;
 
     public Main(String[] args) {
         try {
@@ -29,7 +31,7 @@ public class Main {
             System.err.println("Error: File not found: " + args[0]);
             System.exit(1);
         }
-        p = new latte.parser(l, l.getSymbolFactory());
+        p = new parser(l, l.getSymbolFactory());
     }
 
     public static void main(String args[]) throws Exception {
@@ -46,6 +48,17 @@ public class Main {
                 System.err.println("At line " + String.valueOf(t.l.line_num()) + ", near \"" + t.l.buff() + "\" :");
                 return;
             }
+            FunctionSignature functionSignature;
+
+            functionSignature= new FunctionSignature("printInt");
+            functionSignature.addArgument("x", new Int());
+            functionSignature= new FunctionSignature("readInt");
+            functionSignature.addArgument("x", new Int());
+
+
+
+
+
             program.accept(new SimplifyLiteralSyntaxVisitor(), null);
             program.accept(new ReturnVisitor(), false);
             program.accept(new DeclarationVisitor(), new DeclarationContext());
@@ -56,7 +69,12 @@ public class Main {
             program.accept(new DeclarationVisitor(), new DeclarationContext());
 
             program.accept(new TranslatorVisitor(), new TranslationContext());
-            QuadCode rawQuadCode = new QuadCode(new LinkedList<>(Block.allBlocks), DeclarationContext.getTypes(), DeclarationContext.getParamsInFunction(), new Integer(1000000));
+            QuadCode rawQuadCode = new QuadCode(
+                    new LinkedList<>(Block.allBlocks),
+                    DeclarationContext.getTypes(),
+                    FunctionSignature.allSignatures(),
+                    ClassSignature.allSignatures(),
+                    new Integer(1000000));
 
             MemoryManager memoryManager = new MemoryManager(
                     Arrays.asList(

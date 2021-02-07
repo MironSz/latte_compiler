@@ -4,8 +4,9 @@ extern c_print_str
 extern c_read_str
 extern c_add_two_strings
 extern c_exit
+extern c_new
 
-
+global _new
 global _printString
 global _printInt
 global _error
@@ -15,6 +16,15 @@ global _readString
 
 segment .text
 
+_new:
+    mov rdi, [rsp+8]
+    push rbp
+    mov rbp, rsp
+    and rsp, -16
+    call c_print_int
+    mov rsp, rbp
+    pop rbp
+    ret
 
 _error:
     mov rdi,[rsp+8]

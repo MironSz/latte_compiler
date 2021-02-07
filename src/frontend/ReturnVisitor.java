@@ -15,7 +15,7 @@ public class ReturnVisitor extends FoldVisitor<Boolean, Boolean> {
         long mainCount = p.listtopdef_.stream()
                 .filter(topDef -> topDef instanceof FnDef)
                 .map(topDef -> (FnDef) topDef)
-                .filter(topDef -> topDef.ident_.equals("main"))
+                .filter(topDef -> ((FunDefCode) topDef.fundef_).ident_.equals("main"))
                 .count();
         if (mainCount == 0)
             throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num, p.col_num, "Main definition not found"));
@@ -26,7 +26,7 @@ public class ReturnVisitor extends FoldVisitor<Boolean, Boolean> {
     }
 
     @Override
-    public Boolean visit(FnDef p, Boolean arg) {
+    public Boolean visit(FunDefCode p, Boolean arg) {
         if (!(p.type_ instanceof Void) && !super.visit(p, arg))
             throw new RuntimeException(SemanticErrorMessage.buildMessage(p.line_num, p.col_num,
                     "Function " + p.ident_ + " doesn't end with \"return\" statement"));

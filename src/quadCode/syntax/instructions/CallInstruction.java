@@ -12,22 +12,24 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class CallInstruction extends Instruction{
-    String resultVar;
-    String function;
+    InstructionArgument resultVar;
+    InstructionArgument function;
 
-    public CallInstruction(String resultVar, String function) {
+    public CallInstruction(InstructionArgument resultVar, InstructionArgument function) {
 
         this.resultVar = resultVar;
         this.function = function;
     }
 
     @Override
-    public void setResultVar(String resultVar) {
-        resultVar = resultVar;
+    public void changeArgument(InstructionArgument from, InstructionArgument to) {
+        if (resultVar == from)
+            resultVar = to;
+        else if (function == from)
+            function = to;
     }
-
     @Override
-    public String getResultVar() {
+    public InstructionArgument getResultVar() {
         return resultVar;
     }
 
@@ -40,7 +42,7 @@ public class CallInstruction extends Instruction{
     public List<String> allVarNamesInInstruction() {
         if( resultVar==null || resultVar.equals(""))
             return new LinkedList<>();
-        return Collections.singletonList(resultVar);
+        return Collections.singletonList(resultVar.assemblyName());
     }
 
     @Override
@@ -48,7 +50,7 @@ public class CallInstruction extends Instruction{
         return new LinkedList<>();
     }
 
-    public String getFunction() {
+    public InstructionArgument getFunction() {
         return function;
     }
 

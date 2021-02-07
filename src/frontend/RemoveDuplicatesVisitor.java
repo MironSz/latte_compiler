@@ -17,7 +17,7 @@ public class RemoveDuplicatesVisitor extends FoldVisitor<RemoveDuplicatesContext
     @Override
     public RemoveDuplicatesContext visit(ArgCode p, RemoveDuplicatesContext arg) {
         arg.createNewVar(p.ident_);
-        p.ident_=arg.getName(p.ident_);
+        p.ident_ = arg.getName(p.ident_);
         return arg;
     }
 
@@ -56,38 +56,31 @@ public class RemoveDuplicatesVisitor extends FoldVisitor<RemoveDuplicatesContext
         return arg;
     }
 
-    @Override
-    public RemoveDuplicatesContext visit(Ass p, RemoveDuplicatesContext arg) {
-        p.ident_ = arg.getName(p.ident_);
-        p.expr_.accept(this, arg);
-        return arg;
-    }
 
     @Override
     public RemoveDuplicatesContext visit(FnDef p, RemoveDuplicatesContext arg) {
-        arg=arg.newScope();
+        arg = arg.newScope();
         return super.visit(p, arg);
     }
 
     @Override
     public RemoveDuplicatesContext visit(BlockCode p, RemoveDuplicatesContext arg) {
-        arg=arg.newScope();
-        return super.visit(p, arg);
-    }
-
-
-
-    @Override
-    public RemoveDuplicatesContext visit(Incr p, RemoveDuplicatesContext arg) {
-        p.ident_=arg.getName(p.ident_);
+        arg = arg.newScope();
         return super.visit(p, arg);
     }
 
     @Override
-    public RemoveDuplicatesContext visit(Decr p, RemoveDuplicatesContext arg) {
-        p.ident_=arg.getName(p.ident_);
+    public RemoveDuplicatesContext visit(ClassDef p, RemoveDuplicatesContext arg) {
+        arg = arg.newScope();
         return super.visit(p, arg);
     }
+
+    @Override
+    public RemoveDuplicatesContext visit(Variable p, RemoveDuplicatesContext arg) {
+        p.ident_ = arg.getName(p.ident_);
+        return super.visit(p, arg);
+    }
+
 
     @Override
     public RemoveDuplicatesContext visit(CondElse p, RemoveDuplicatesContext arg) {
@@ -97,9 +90,4 @@ public class RemoveDuplicatesVisitor extends FoldVisitor<RemoveDuplicatesContext
         return arg;
     }
 
-    @Override
-    public RemoveDuplicatesContext visit(EVar p, RemoveDuplicatesContext arg) {
-        p.ident_=arg.getName(p.ident_);
-        return super.visit(p, arg);
-    }
 }

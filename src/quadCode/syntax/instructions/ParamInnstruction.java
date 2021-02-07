@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-public class ParamInnstruction extends Instruction{
+public class ParamInnstruction extends Instruction {
     InstructionArgument param;
 
     public ParamInnstruction(InstructionArgument param) {
@@ -17,23 +17,23 @@ public class ParamInnstruction extends Instruction{
     }
 
     @Override
-    public void setResultVar(String resultVar) {
-
+    public void changeArgument(InstructionArgument from, InstructionArgument to) {
+        param = to;
     }
 
     @Override
-    public String getResultVar() {
+    public InstructionArgument getResultVar() {
         return null;
     }
 
     @Override
     public void translate(AssemblyTranslator assemblyTranslator, MemoryManager memoryManagement) {
-        assemblyTranslator.translate(this,memoryManagement);
+        assemblyTranslator.translate(this, memoryManagement);
     }
 
     @Override
     public List<String> allVarNamesInInstruction() {
-        if(param instanceof VarArgument)
+        if (param instanceof VarArgument)
             return Collections.singletonList(((VarArgument) param).getVarName());
         return new LinkedList<>();
     }
@@ -45,7 +45,7 @@ public class ParamInnstruction extends Instruction{
 
     @Override
     public String toString() {
-        return "Param "+param;
+        return "Param " + param;
     }
 
     public InstructionArgument getParam() {
